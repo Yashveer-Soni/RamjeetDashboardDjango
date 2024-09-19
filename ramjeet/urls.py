@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
     SignInView, csrf_token, CategoryListView, delete_product, update_product,FetchSingleProduct,
     BrandListView, add_item, SubCategoryListView, ItemMasterListView, 
-    ItemMasterDetailView,add_brand,CustomTokenObtainPairView  
+    ItemMasterDetailView,add_brand,CustomTokenObtainPairView ,search 
 )
 from django.views.generic import TemplateView
 
@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/addbrands/', add_brand, name='add_brand'),
     path('api/subcategories/', SubCategoryListView.as_view(), name='SubCategory-List'),
     path('api/products/', add_item, name='add-product'),
+    path('api/search/', search, name='search'),
     path('api/inventory/', ItemMasterListView.as_view(), name='inventory-list'),
     path('api/items/<int:id>/', ItemMasterDetailView.as_view(), name='item-detail'),
     path('api/products/<int:product_id>/', delete_product, name='delete_product'),

@@ -21,7 +21,7 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-FRONTEND_DIR = BASE_DIR / "reactfrontend"
+# FRONTEND_DIR = BASE_DIR / "reactfrontend"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -88,7 +88,7 @@ ROOT_URLCONF = 'RamjeetAdminPanel.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [FRONTEND_DIR / "build",],
+        'DIRS': [BASE_DIR / "static",],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -187,8 +187,7 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directory for collected static files
 
 STATICFILES_DIRS = [
-    FRONTEND_DIR / "build/static",  # Project-level static files directory
-    # Add more directories if needed
+    BASE_DIR / "static",
 ]
 
 # Default primary key field type

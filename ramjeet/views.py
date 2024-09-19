@@ -18,6 +18,8 @@ from django.shortcuts import redirect
 from functools import wraps
 from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
+from django.middleware.csrf import get_token
 
 
 def role_required(required_role):
@@ -34,9 +36,14 @@ def role_required(required_role):
         return _wrapped_view
     return decorator
 
-@ensure_csrf_cookie
+# @ensure_csrf_cookie
+# def csrf_token(request):
+#     return JsonResponse({'csrfToken': request.META.get('CSRF_COOKIE', '')})
+
 def csrf_token(request):
-    return JsonResponse({'csrfToken': request.META.get('CSRF_COOKIE', '')})
+    csrf_token = get_token(request)
+    print("csrf_token", csrf_token)
+    return JsonResponse({'csrfToken': csrf_token})
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -48,6 +55,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['role'] = user.role  # Include the role in the token
         token['is_staff'] = user.is_staff  # Include is_staff in the token
         token['is_superuser'] = user.is_superuser  # Include is_superuser in the token
+
+        # Add additional user information to the token
+        token['username'] = user.username 
+        token['first_name'] = user.first_name  
+        token['last_name'] = user.last_name 
+        token['email'] = user.email  
 
         return token
 
@@ -310,3 +323,15 @@ def add_brand(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def search(request):
+    query = request.GET.get('query', '') 
+    if query:
+        items = InventoryMaster.objects.filter(
+            Q(item__item_name__icontains=query) 
+        )
+        serializer = InventorySerializer(items[:10], many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response({'error': 'No query provided'}, status=status.HTTP_400_BAD_REQUEST)
