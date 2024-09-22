@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
 from rest_framework import generics
-from .models import CategoryMaster, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster,UnitMaster
+from .models import CategoryMaster, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster,UnitMaster, Tag, Collection
 from .serializers import CategoryMasterSerializer, BrandMasterSerializer, ProductSerializer, CategoryMaster,SubCategoryMasterSerializer, InventorySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -144,11 +144,11 @@ class SignInView(APIView):
 @api_view(['POST'])
 def add_item(request):
     data = request.data
-    print(data);
+    print("data", data)
     files = request.FILES.getlist('images')
 
     # Check if required keys are in the request data
-    required_keys = ['sub_category','category', 'brand', 'item_name', 'bar_code', 'mrp', 'purchase_rate', 'pkt_date', 'quantity', 'weight']
+    required_keys = ['sub_category', 'category', 'brand', 'item_name', 'bar_code', 'mrp', 'purchase_rate', 'pkt_date', 'quantity', 'weight']
     for key in required_keys:
         if key not in data:
             return Response({"error": f"'{key}' is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -170,7 +170,7 @@ def add_item(request):
         brand = BrandMaster.objects.get(id=data['brand'])
     except BrandMaster.DoesNotExist:
         return Response({"error": "Brand not found."}, status=status.HTTP_404_NOT_FOUND)
-    
+
     # Check for duplicate bar_code
     if ItemMaster.objects.filter(bar_code=data['bar_code']).exists():
         return Response({"error": "Product with this bar_code already exists."}, status=status.HTTP_400_BAD_REQUEST)
@@ -178,17 +178,36 @@ def add_item(request):
     # Create the UnitMaster instance directly
     unit = UnitMaster.objects.create(
         quantity=data['quantity'],
-        weight=data['weight']
+        weight=data['weight'],
+        weight_type=data.get('weight_type', 'kg')
     )
 
     # Create the ItemMaster instance
     item = ItemMaster.objects.create(
         sub_category=sub_category,
         item_name=data['item_name'],
+        item_description=data.get('item_description', ''),
+        status=data.get('status', 'Draft'),
+        cost_per_item=data.get('cost_per_item', 0),
+        profit=data.get('profit', 0),
+        margin=data.get('margin', 0),
         brand=brand,
         bar_code=data.get('bar_code', ''),
         is_deleted=False
     )
+
+    # Set tags ManyToMany field
+    if 'tags' in data:
+        tag_names = [name.strip() for name in data['tags'].split(',')]
+        tags = [Tag.objects.get_or_create(name=name)[0] for name in tag_names]  # Create if not exist
+        item.tags.set(tags)
+
+    # Set collections ManyToMany field
+    if 'collections' in data:
+        collections_names = [name.strip() for name in data['collections'].split(',')]
+        collections = [Collection.objects.get_or_create(name=name)[0] for name in collections_names]  # Create if not exist
+        item.collections.set(collections)
+
 
     # Create the InventoryMaster instance
     inventory_item = InventoryMaster.objects.create(
@@ -207,6 +226,7 @@ def add_item(request):
 
     serializer = ProductSerializer(item)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 
 class CustomPagination(PageNumberPagination):

@@ -94,6 +94,7 @@ class BrandMaster(models.Model):
 class UnitMaster(models.Model):
     quantity = models.FloatField()
     weight = models.FloatField()
+    weight_type=models.CharField(max_length=50, choices=[('kg', 'Kg'), ('g', 'G'), ('l', 'L'), ('ml', 'Ml'), ('pcs', 'Pcs')], null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -104,9 +105,28 @@ class UnitMaster(models.Model):
         verbose_name = "Unit"
         verbose_name_plural = "Add Unit"
 
+class Tag(models.Model):
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+
+class Collection(models.Model):
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+
 class ItemMaster(models.Model):
     sub_category = models.ForeignKey(SubCategoryMaster, on_delete=models.CASCADE)
     item_name = models.CharField(max_length=255)
+    item_description = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=50, choices=[('active', 'Active'), ('draft', 'Draft')], default='draft')
+    cost_per_item = models.DecimalField(max_digits=10, decimal_places=2,null=True)
+    profit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00,null=True)
+    margin = models.DecimalField(max_digits=10, decimal_places=2, default=0.00,null=True)
+    tags = models.ManyToManyField(Tag, blank=True)
+    collections = models.ManyToManyField(Collection, blank=True)
     brand = models.ForeignKey(BrandMaster, on_delete=models.CASCADE)
     bar_code = models.CharField(max_length=255, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
@@ -115,6 +135,7 @@ class ItemMaster(models.Model):
 
     def __str__(self):
         return self.item_name
+
     
 class OrderItem(models.Model):
     order = models.ForeignKey(OrderMaster, on_delete=models.CASCADE, related_name='order_items')
@@ -190,12 +211,12 @@ class ItemImage(models.Model):
 
 class InventoryMaster(models.Model):
     item = models.ForeignKey(ItemMaster, on_delete=models.CASCADE, related_name='inventories')
-    mrp = models.DecimalField(max_digits=10, decimal_places=2)
-    purchase_rate = models.DecimalField(max_digits=10, decimal_places=2)
+    mrp = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    purchase_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     pkt_date = models.DateField()
     expired_date = models.DateField(blank=True, null=True)
     is_expired = models.BooleanField(default=False)
-    unit = models.ForeignKey(UnitMaster, on_delete=models.CASCADE)
+    unit = models.ForeignKey(UnitMaster, on_delete=models.CASCADE, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

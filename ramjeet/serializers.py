@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import CategoryMaster, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage
+from .models import CategoryMaster, Tag, Collection, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,11 +34,13 @@ class ProductSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=CategoryMaster.objects.all(), source='sub_category.category')
     sub_category = serializers.PrimaryKeyRelatedField(queryset=SubCategoryMaster.objects.all())
     brand = serializers.PrimaryKeyRelatedField(queryset=BrandMaster.objects.all())
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)  # Include tags
+    collections = serializers.PrimaryKeyRelatedField(queryset=Collection.objects.all(), many=True)  # Include collections
     images = ItemImageSerializer(many=True, read_only=True)  # Include images
 
     class Meta:
         model = ItemMaster
-        fields = ['id', 'item_name', 'bar_code', 'category', 'sub_category', 'brand', 'images', 'created_at', 'updated_at']
+        fields = ['id', 'item_name', 'bar_code', 'category', 'sub_category', 'brand', 'tags', 'collections', 'images', 'created_at', 'updated_at']
 
 class ItemSerializer(serializers.ModelSerializer):
     sub_category = SubCategoryMasterSerializer()
@@ -52,7 +54,7 @@ class ItemSerializer(serializers.ModelSerializer):
 class UnitMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = UnitMaster
-        fields = ['quantity', 'weight']
+        fields = ['quantity', 'weight','weight_type']
 
 class InventorySerializer(serializers.ModelSerializer):
     item = ItemSerializer()

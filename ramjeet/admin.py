@@ -7,7 +7,8 @@ from django.utils.safestring import mark_safe
 from .models import (
     Parent_Category, CategoryMaster, SubCategoryMaster, BrandMaster,
     UnitMaster, ItemMaster, InventoryMaster,
-    FirmMaster, InverdInventoryMaster, InverdInvoiceProductDetail, ItemImage,CustomerMaster, OrderMaster,OrderItem,PaymentMaster,CouponMaster,StockMovement,UserReviews,SupplierMaster,PurchaseOrderMaster,PurchaseOrderDetail,DeliveryMaster,NotificationMaster,NotificationSettings,ReturnMaster,Wishlist,InventoryAdjustment,ShippingMethod,ShippingDetails, CustomUser
+    FirmMaster, InverdInventoryMaster, InverdInvoiceProductDetail, ItemImage,CustomerMaster, OrderMaster,OrderItem,PaymentMaster,CouponMaster,StockMovement,UserReviews,SupplierMaster,PurchaseOrderMaster,PurchaseOrderDetail,DeliveryMaster,NotificationMaster,NotificationSettings,ReturnMaster,Wishlist,InventoryAdjustment,ShippingMethod,ShippingDetails, CustomUser,
+    Tag,Collection
 )
 
 admin.site.site_header = "Ramjeet Dashboard"
@@ -15,6 +16,8 @@ admin.site.site_title = "Dashboard"
 admin.site.index_title = "Ramjeet"
 
 admin.site.register(CustomUser)
+admin.site.register(Tag)
+admin.site.register(Collection)
 admin.site.register(CustomerMaster)
 admin.site.register(OrderMaster)
 admin.site.register(OrderItem)
