@@ -46,15 +46,21 @@ class ItemSerializer(serializers.ModelSerializer):
     sub_category = SubCategoryMasterSerializer()
     brand = BrandMasterSerializer()
     images = ItemImageSerializer(many=True, read_only=True)  # Include images
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)  # Include tags
+    collections = serializers.PrimaryKeyRelatedField(queryset=Collection.objects.all(), many=True)  # Include collections
+    item_description=serializers.PrimaryKeyRelatedField(queryset=ItemMaster.objects.all())
+    status=serializers.PrimaryKeyRelatedField(queryset=ItemMaster.objects.all())
 
     class Meta:
         model = ItemMaster
-        fields = ['id','item_name', 'bar_code', 'sub_category', 'brand', 'images', 'created_at', 'updated_at']
+        fields = ['id', 'item_name', 'bar_code','item_description','status', 'sub_category', 'brand', 'images', 'tags', 'collections', 'created_at', 'updated_at']
+
 
 class UnitMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = UnitMaster
         fields = ['quantity', 'weight','weight_type']
+
 
 class InventorySerializer(serializers.ModelSerializer):
     item = ItemSerializer()
