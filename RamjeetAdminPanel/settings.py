@@ -214,7 +214,7 @@ AWS_S3_VERITY = True
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=10),  # 1 hour for access token
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),  # 1 hour for access token
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # 7 days for refresh token
     'ROTATE_REFRESH_TOKENS': True,                # Rotate refresh tokens on refresh
     'BLACKLIST_AFTER_ROTATION': True,             # Blacklist old refresh tokens after rotation
