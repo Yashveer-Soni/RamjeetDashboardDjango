@@ -1,28 +1,75 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
-class CustomUser(AbstractUser):
+class MyUserManager(BaseUserManager):
+    def create_user(self, email, full_name, password=None):
+       
+        if not email:
+            raise ValueError('Users must have an email address')
+
+        user = self.model(
+            email=self.normalize_email(email),
+            full_name=full_name,
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, full_name, password=None):
+        """
+        Creates and saves a superuser with the given email, date of
+        birth, and password.
+        """
+        user = self.create_user(
+            email=email,
+            password=password,
+            full_name=full_name,
+        )
+        user.is_admin = True
+        user.is_staff = True  # Set staff status
+        user.is_superuser = True  # Set superuser status
+        user.save(using=self._db)
+        return user
+
+
+class MyUser(AbstractBaseUser, PermissionsMixin):  # Inherit from PermissionsMixin
     ROLE_CHOICES = (
         ('admin', 'Admin'),
         ('user', 'User'),
     )
+    email = models.EmailField(
+        verbose_name='email address',
+        max_length=255,
+        unique=True,
+    )
+    full_name =  models.CharField(max_length=255)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
+    is_active = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)  # Add this field as Boolean
+    is_superuser = models.BooleanField(default=False)  # Add this field as Boolean
 
-    # Specify related names to avoid conflicts with auth.Group and auth.Permission
-    groups = models.ManyToManyField(
-        'auth.Group',
-        related_name='customuser_set',  
-        blank=True,
-        help_text=('The groups this user belongs to.'),
-    )
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='customuser_set',  
-        blank=True,
-        help_text=('Specific permissions for this user.'),
-    )
-    
+    objects = MyUserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['full_name']
+
+    def __str__(self):
+        return self.email
+
+    def has_perm(self, perm, obj=None):
+        """
+        Does the user have a specific permission?
+        """
+        return self.is_superuser or super().has_perm(perm, obj)
+
+    def has_module_perms(self, app_label):
+        """
+        Does the user have permissions to view the app `app_label`?
+        """
+        return self.is_superuser or super().has_module_perms(app_label)
+        
 class CustomerMaster(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)

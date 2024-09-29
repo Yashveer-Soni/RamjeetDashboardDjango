@@ -17,6 +17,7 @@ from decouple import Csv
 from datetime import timedelta
 
 
+AUTH_USER_MODEL = 'ramjeet.MyUser'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -121,20 +122,20 @@ DATABASES = {
         # 'HOST':'localhost',
         # 'PORT':'3306',
         # postgresql
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'ramjeetdashboard',
-        # 'USER': 'ramjeet',
-        # 'HOST': 'localhost',
-        # 'PASSWORD': 'ramjeet',
-        # 'PORT': '5432',    
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ramjeet',
+        'USER': 'ramjeet',
+        'HOST': 'localhost',
+        'PASSWORD': 'ramjeet',
+        'PORT': '5432',    
         # 
         # production database
-         'ENGINE': 'django.db.backends.postgresql',
-         'NAME': 'ramjeet',
-         'USER': 'ramjeet',
-         'HOST': config('HOST'),
-         'PASSWORD': config('PASSWORD'),
-         'PORT': '5432',    
+        #  'ENGINE': 'django.db.backends.postgresql',
+        #  'NAME': 'ramjeet',
+        #  'USER': 'ramjeet',
+        #  'HOST': config('HOST'),
+        #  'PASSWORD': config('PASSWORD'),
+        #  'PORT': '5432',    
     }
 }
 
@@ -222,5 +223,3 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': True,                    # Update the last login timestamp
     # other settings...
 }
-
-AUTH_USER_MODEL = 'ramjeet.CustomUser'

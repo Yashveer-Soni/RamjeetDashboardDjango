@@ -1,21 +1,25 @@
+from django import forms
 from django.contrib import admin
+from django.contrib.auth.models import Group
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.http import HttpResponse
 import csv
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from django.contrib.auth.admin import GroupAdmin
 from .models import (
     Parent_Category, CategoryMaster, SubCategoryMaster, BrandMaster,
     UnitMaster, ItemMaster, InventoryMaster,
-    FirmMaster, InverdInventoryMaster, InverdInvoiceProductDetail, ItemImage,CustomerMaster, OrderMaster,OrderItem,PaymentMaster,CouponMaster,StockMovement,UserReviews,SupplierMaster,PurchaseOrderMaster,PurchaseOrderDetail,DeliveryMaster,NotificationMaster,NotificationSettings,ReturnMaster,Wishlist,InventoryAdjustment,ShippingMethod,ShippingDetails, CustomUser,
-    Tag,Collection
+    FirmMaster, InverdInventoryMaster, InverdInvoiceProductDetail, ItemImage,CustomerMaster, OrderMaster,OrderItem,PaymentMaster,CouponMaster,StockMovement,UserReviews,SupplierMaster,PurchaseOrderMaster,PurchaseOrderDetail,DeliveryMaster,NotificationMaster,NotificationSettings,ReturnMaster,Wishlist,InventoryAdjustment,ShippingMethod,ShippingDetails,
+    Tag,Collection, MyUser
 )
-
 admin.site.site_header = "Ramjeet Dashboard"
 admin.site.site_title = "Dashboard"
 admin.site.index_title = "Ramjeet"
 
-admin.site.register(CustomUser)
 admin.site.register(Tag)
 admin.site.register(Collection)
 admin.site.register(CustomerMaster)
@@ -37,6 +41,76 @@ admin.site.register(ShippingMethod)
 admin.site.register(ShippingDetails)
 admin.site.register(Wishlist)
 
+
+class UserCreationForm(forms.ModelForm):
+    """A form for creating new users. Includes all the required
+    fields, plus a repeated password."""
+    password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
+
+    class Meta:
+        model = MyUser
+        fields = ('email', 'full_name', 'role')  # Include role in creation form
+
+    def clean_password2(self):
+        # Check that the two password entries match
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords don't match")
+        return password2
+
+    def save(self, commit=True):
+        # Save the provided password in hashed format
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        if commit:
+            user.save()
+        return user
+
+
+class UserChangeForm(forms.ModelForm):
+    """A form for updating users. Includes all the fields on
+    the user, but replaces the password field with admin's
+    password hash display field.
+    """
+    password = ReadOnlyPasswordHashField()
+
+    class Meta:
+        model = MyUser
+        fields = ('email', 'password', 'full_name', 'is_active', 'is_admin', 'role', 'is_staff','is_superuser', 'groups')
+
+    def clean_password(self):
+        # Return the initial password, regardless of what the user enters
+        return self.initial["password"]
+
+
+class UserAdmin(BaseUserAdmin):
+    # The forms to add and change user instances
+    form = UserChangeForm
+    add_form = UserCreationForm
+
+    # The fields to be used in displaying the User model
+    list_display = ('email', 'full_name', 'is_admin', 'is_staff', 'is_active', 'role', 'is_superuser')  # added is_staff and is_active
+    list_filter = ('is_admin', 'is_active', 'role', 'is_superuser', 'is_staff')
+
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Personal info', {'fields': ('full_name',)}),
+        ('Permissions', {'fields': ('is_active', 'is_admin', 'is_staff' , 'role', 'is_superuser', 'groups')}),  # added is_active, is_admin, and role
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'full_name', 'password1', 'password2', 'is_active', 'is_admin', 'role', 'groups'),  # added is_active, is_admin, and role
+        }),
+    )
+    search_fields = ('email',)
+    ordering = ('email',)
+    filter_horizontal = ('groups',) 
+
+# Register the new UserAdmin...
+admin.site.register(MyUser, UserAdmin)
 
 class ExportCsvMixin:
     def export_as_csv(self, request, queryset):
