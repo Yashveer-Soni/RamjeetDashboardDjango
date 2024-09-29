@@ -39,6 +39,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -120,20 +121,20 @@ DATABASES = {
         # 'HOST':'localhost',
         # 'PORT':'3306',
         # postgresql
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ramjeetdashboard',
-        'USER': 'ramjeet',
-        'HOST': 'localhost',
-        'PASSWORD': 'ramjeet',
-        'PORT': '5432',    
+        # 'ENGINE': 'django.db.backends.postgresql',
+        # 'NAME': 'ramjeetdashboard',
+        # 'USER': 'ramjeet',
+        # 'HOST': 'localhost',
+        # 'PASSWORD': 'ramjeet',
+        # 'PORT': '5432',    
         # 
         # production database
-        #  'ENGINE': 'django.db.backends.postgresql',
-        #  'NAME': 'ramjeet',
-        #  'USER': 'ramjeet',
-        #  'HOST': config('HOST'),
-        #  'PASSWORD': config('PASSWORD'),
-        #  'PORT': '5432',    
+         'ENGINE': 'django.db.backends.postgresql',
+         'NAME': 'ramjeet',
+         'USER': 'ramjeet',
+         'HOST': config('HOST'),
+         'PASSWORD': config('PASSWORD'),
+         'PORT': '5432',    
     }
 }
 

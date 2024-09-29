@@ -103,7 +103,7 @@ class ItemMasterAdmin(admin.ModelAdmin, ExportCsvMixin):
     readonly_fields = ('image_preview',)
     actions = ['mark_as_deleted']
     inlines = [ItemImageInline]  # Include ItemImageInline for managing images
-
+    exclude=('profit','margin','tags','collections','status','is_deleted')
     def mark_as_deleted(self, request, queryset):
         queryset.update(is_deleted=True)
 
