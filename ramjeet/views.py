@@ -57,9 +57,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['is_superuser'] = user.is_superuser  # Include is_superuser in the token
 
         # Add additional user information to the token
-        token['username'] = user.username 
-        token['first_name'] = user.first_name  
-        token['last_name'] = user.last_name 
+        token['full_name'] = user.full_name  
         token['email'] = user.email  
 
         return token
@@ -81,29 +79,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise serializers.ValidationError('You do not have the required role to log in.')
 
         return data
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
-
-
-class CategoryListView(generics.ListAPIView):
-    queryset = CategoryMaster.objects.filter(is_deleted=False)
-    serializer_class = CategoryMasterSerializer
-
-class SubCategoryListView(generics.ListAPIView):
-    serializer_class = SubCategoryMasterSerializer
-
-    def get_queryset(self):
-        queryset = SubCategoryMaster.objects.filter(is_deleted=False)
-        category_id = self.request.query_params.get('category')
-        if category_id:
-            queryset = queryset.filter(category_id=category_id)
-        return queryset
-
-class BrandListView(generics.ListAPIView):
-    queryset = BrandMaster.objects.filter(is_deleted=False)
-    serializer_class = BrandMasterSerializer
-
+    
 class SignInView(APIView):
     def post(self, request):
         username = request.data.get('username')
@@ -132,6 +108,30 @@ class SignInView(APIView):
             }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class CategoryListView(generics.ListAPIView):
+    queryset = CategoryMaster.objects.filter(is_deleted=False)
+    serializer_class = CategoryMasterSerializer
+
+class SubCategoryListView(generics.ListAPIView):
+    serializer_class = SubCategoryMasterSerializer
+
+    def get_queryset(self):
+        queryset = SubCategoryMaster.objects.filter(is_deleted=False)
+        category_id = self.request.query_params.get('category')
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        return queryset
+
+class BrandListView(generics.ListAPIView):
+    queryset = BrandMaster.objects.filter(is_deleted=False)
+    serializer_class = BrandMasterSerializer
+
+
         
 # @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
