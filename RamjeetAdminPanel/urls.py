@@ -7,7 +7,7 @@ from django.contrib import admin
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('ramjeet.urls')),
-    path('', include('ramjeet.urls'), name="ramjeet"),
+    path('', include('ramjeetfrontend.urls')),
 ]
 
 # Add static media URL serving in DEBUG mode

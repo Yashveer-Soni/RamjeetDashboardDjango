@@ -16,7 +16,6 @@ from decouple import config
 from decouple import Csv
 from datetime import timedelta
 
-
 AUTH_USER_MODEL = 'ramjeet.MyUser'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -51,9 +50,16 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'ramjeet',
+    'ramjeetfrontend',
     'import_export',
     # 'whitenoise.runserver_nostatic'
 ]
+
+
+
+
+
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -90,7 +96,8 @@ ROOT_URLCONF = 'RamjeetAdminPanel.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "static",],
+        'DIRS': [BASE_DIR / "templates",],
+        # 'DIRS': [BASE_DIR / "static",],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -122,20 +129,20 @@ DATABASES = {
         # 'HOST':'localhost',
         # 'PORT':'3306',
         # postgresql
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'ramjeet',
-        # 'USER': 'ramjeet',
-        # 'HOST': 'localhost',
-        # 'PASSWORD': 'ramjeet',
-        # 'PORT': '5432',    
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ramjeet',
+        'USER': 'ramjeet',
+        'HOST': 'localhost',
+        'PASSWORD': 'ramjeet',
+        'PORT': '5432',    
         # 
         # production database
-         'ENGINE': 'django.db.backends.postgresql',
-         'NAME': 'ramjeet',
-         'USER': 'ramjeet',
-         'HOST': config('HOST'),
-         'PASSWORD': config('PASSWORD'),
-         'PORT': '5432',    
+        #  'ENGINE': 'django.db.backends.postgresql',
+        #  'NAME': 'ramjeet',
+        #  'USER': 'ramjeet',
+        #  'HOST': config('HOST'),
+        #  'PASSWORD': config('PASSWORD'),
+        #  'PORT': '5432',    
     }
 }
 
@@ -191,6 +198,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directory for collected s
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

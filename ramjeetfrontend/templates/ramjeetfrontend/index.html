@@ -1,0 +1,13 @@
+
+{% extends "ramjeetfrontend/_base.html" %}
+ 
+{% block content %}
+{% include "ramjeetfrontend/header.html" %}
+{% include "ramjeetfrontend/homepage_banner.html" %}
+<div class="container mt-5 grid grid-cols-4 gap-4 max-w-screen-xl ">
+    {% for item in items %}
+    	{% include "ramjeetfrontend/product_card.html" with item=item inventory_data=inventory_data %}
+	{% endfor %}
+</div>
+{% include "ramjeetfrontend/comming_soon.html" %}
+{% endblock content %}

@@ -1,0 +1,50 @@
+{% extends "ramjeetfrontend/_base.html" %}
+ 
+{% block content %}
+{% include "ramjeetfrontend/header.html" %}
+<div class="container mt-5 max-w-screen-xl ">
+   <div class=" py-8">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col md:flex-row -mx-4">
+              <div class="md:flex-1 px-4">
+                  <div class="h-[460px] rounded-lg bg-black-300  mb-4">
+                      <img class="w-full h-full object-cover" src="{{ product.images.first.image.url }}" alt="Product Image">
+                  </div>
+                  
+              </div>
+              <div class="md:flex-1 px-4">
+                  <h2 class="text-2xl font-bold text-black-800  mb-2">{{product.item_name}}</h2>
+                  <div class="flex mb-4">
+                      <div class="mr-4">
+                        {% for inventory in inventory_data %}
+                          <span class="font-bold">Price:</span>
+                          <span class="font-semibold ">₹{{inventory.purchase_rate}}</span>
+                          <span class="text-black-600 text-sm   line-through  ">₹{{inventory.mrp}}</span>
+                        {% endfor %}
+
+                      </div>
+                      <div>
+                          <span class="font-bold text-black-700 ">Availability:</span>
+                          {% for inventory in inventory_data %}
+                          <span class="text-black-600 ">{{inventory.stock_status  }}</span>
+                        {% endfor %}
+
+                      </div>
+                  </div>
+                 
+                  <div>
+                      <span class="font-bold text-black-700 ">Product Description:</span>
+                      <p class="text-black-600  text-sm mt-2">
+                         {{product.item_description}}
+                      </p>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+  
+</div>
+{% include "ramjeetfrontend/comming_soon.html" %}
+
+
+{% endblock content %}
