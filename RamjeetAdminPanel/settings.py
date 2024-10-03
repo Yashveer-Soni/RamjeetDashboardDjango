@@ -125,20 +125,20 @@ DATABASES = {
         # 'HOST':'localhost',
         # 'PORT':'3306',
         # postgresql
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ramjeet',
-        'USER': 'ramjeet',
-        'HOST': 'localhost',
-        'PASSWORD': 'ramjeet',
-        'PORT': '5432',    
+        # 'ENGINE': 'django.db.backends.postgresql',
+        # 'NAME': 'ramjeet',
+        # 'USER': 'ramjeet',
+        # 'HOST': 'localhost',
+        # 'PASSWORD': 'ramjeet',
+        # 'PORT': '5432',    
         # 
         # production database
-        #  'ENGINE': 'django.db.backends.postgresql',
-        #  'NAME': 'ramjeet',
-        #  'USER': 'ramjeet',
-        #  'HOST': config('HOST'),
-        #  'PASSWORD': config('PASSWORD'),
-        #  'PORT': '5432',    
+         'ENGINE': 'django.db.backends.postgresql',
+         'NAME': 'ramjeet',
+         'USER': 'ramjeet',
+         'HOST': config('HOST'),
+         'PASSWORD': config('PASSWORD'),
+         'PORT': '5432',    
     }
 }
 
