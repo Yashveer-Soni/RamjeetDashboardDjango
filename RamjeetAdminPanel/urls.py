@@ -6,10 +6,9 @@ from django.views.generic import RedirectView
 # Define your urlpatterns without i18n_patterns or internationalization-related imports
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('home/', include('ramjeetfront.urls')),
+    path('home/', include('ramjeetfrontend.urls')),
     path('', RedirectView.as_view(url='/home/', permanent=False)),
     path('', include('ramjeet.urls')),
-    path("__reload__/", include("django_browser_reload.urls")),
 ]
 
 # Add static media URL serving in DEBUG mode
