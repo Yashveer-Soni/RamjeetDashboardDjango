@@ -1,0 +1,22 @@
+
+<div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow ">
+    <a href="{% url 'product_view' item.id %}">
+        {% if item.images.all %}
+        <img class="rounded-lg w-full" src="{{ item.images.first.image.url }}" alt="{{ item.item_name }}" width="auto" height="auto">
+        {% endif %}
+    </a>
+    <div class="p-5">
+        <a href="{% url 'product_view' item.id %}">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 ">{{item.item_name}}</h5>
+        </a>
+        {% for inventory in inventory_data %}
+            {% if inventory.item_name == item.item_name %}
+            <div class="flex items-center gap-2">
+               <h5 class="text-black mb-3">₹{{inventory.purchase_rate}}</h5>
+               <h6 class="text-gray-500 mb-3 line-through text-sm   ">₹{{inventory.mrp}}</h6>
+            </div>
+            {% endif %}
+         {% endfor %}
+        
+    </div>
+</div>

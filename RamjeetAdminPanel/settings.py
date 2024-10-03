@@ -50,16 +50,21 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'ramjeet',
-    'ramjeetfrontend',
     'import_export',
+    'ramjeetfront',
+    'tailwind', 
+    'django_browser_reload',
     # 'whitenoise.runserver_nostatic'
+]
+
+TAILWIND_APP_NAME = 'ramjeetfront'
+INTERNAL_IPS = [
+    "127.0.0.1",
 ]
 
 
 
-
-
-
+NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -70,6 +75,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_browser_reload.middleware.BrowserReloadMiddleware',
     # 'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 

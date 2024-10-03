@@ -1,16 +1,16 @@
 
-{% extends "ramjeetfrontend/_base.html" %}
+{% extends "_base.html" %}
  
 {% block content %}
-{% include "ramjeetfrontend/header.html" %}
-{% include "ramjeetfrontend/homepage_banner.html" %}
+{% include "header.html" %}
+{% include "homepage_banner.html" %}
 <div class="w-full max-w-screen-xl pt-5">
 <h1 class="mb-4 text-4xl font-bold leading-none tracking-tight text-black md:text-5xl lg:text-3xl ">Top Sellers</h1>
 </div>
 <div class="container mt-5 grid grid-cols-4 gap-4 max-w-screen-xl ">
     {% for item in items %}
-    	{% include "ramjeetfrontend/product_card.html" with item=item inventory_data=inventory_data %}
+    	{% include "product_card.html" with item=item inventory_data=inventory_data %}
 	{% endfor %}
 </div>
-{% include "ramjeetfrontend/comming_soon.html" %}
+{% include "comming_soon.html" %}
 {% endblock content %}

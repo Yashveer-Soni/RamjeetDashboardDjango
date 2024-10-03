@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import (
+from ramjeet.views import (
     SignInView, csrf_token, CategoryListView, delete_product, update_product,FetchSingleProduct,
     BrandListView, add_item, SubCategoryListView, ItemMasterListView, 
     ItemMasterDetailView,add_brand,CustomTokenObtainPairView ,search 
@@ -13,7 +13,7 @@ from django.views.generic import TemplateView
 
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="index.html")),
+    # path("", TemplateView.as_view(template_name="index.html")),
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('signin/', SignInView.as_view(), name='signin'),
