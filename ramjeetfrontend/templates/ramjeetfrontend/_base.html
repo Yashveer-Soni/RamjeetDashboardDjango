@@ -7,49 +7,65 @@
     <meta name="viewport" content=
         "width=device-width, initial-scale=1.0">
     <title>Ramjeet Consumer Service Center</title>
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="apple-touch-icon" href="{% static 'img/apple-icon.png' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/templatemo.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+    <link rel="stylesheet" href="{% static 'css/fontawesome.min.css' %}">
+
+    <!-- Slick -->
+    <link rel="stylesheet" type="text/css" href="{% static 'css/slick.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/slick-theme.css' %}">
 
 </head>
 <body class="">
-    <div class="container-fluid flex items-center justify-center flex-col mx-auto ">
+    <div class="flex items-center justify-center flex-col mx-auto ">
         {% block content %}
         {% endblock content %}
     </div>
     {% include "ramjeetfrontend/footer.html" %}
-    <!-- jQuery and Owl Carousel JS from CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
-        <script>
-             $(document).ready(function(){  
-            // homepage-banner
-                $('.homepage-banner').owlCarousel({
-                loop:true,
-                margin:0,
-                responsiveClass:true,
-                autoplay: true,
-                autoplayTimeout: 3000, 
-                autoplayHoverPause: true, 
-                responsive:{
-                    0:{
-                        items:1,
-                        nav:true
-                    },
-                    600:{
-                        items:1,
-                        nav:false
-                    },
-                    1000:{
-                        items:1,
-                        nav:true,
-                        loop:false
+    <script src="{% static 'js/jquery-1.11.0.min.js' %}"></script>
+    <script src="{% static 'js/jquery-migrate-1.2.1.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/templatemo.js' %}"></script>
+    <script src="{% static 'js/custom.js' %}"></script>
+     <!-- Start Slider Script -->
+    <script src="{% static 'js/slick.min.js' %}"></script>
+    <script>
+        $('#carousel-related-product').slick({
+            infinite: true,
+            arrows: false,
+            slidesToShow: 4,
+            slidesToScroll: 3,
+            dots: true,
+            responsive: [{
+                    breakpoint: 1024,
+                    settings: {
+                        slidesToShow: 3,
+                        slidesToScroll: 3
+                    }
+                },
+                {
+                    breakpoint: 600,
+                    settings: {
+                        slidesToShow: 2,
+                        slidesToScroll: 3
+                    }
+                },
+                {
+                    breakpoint: 480,
+                    settings: {
+                        slidesToShow: 2,
+                        slidesToScroll: 3
                     }
                 }
-                });
-
-             });
-        </script>
+            ]
+        });
+    </script>
 </body>
 
 </html>

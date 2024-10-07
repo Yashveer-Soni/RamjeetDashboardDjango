@@ -2,49 +2,106 @@
  
 {% block content %}
 {% include "ramjeetfrontend/header.html" %}
-<div class="container mt-5 max-w-screen-xl ">
-   <div class=" py-8">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex flex-col md:flex-row -mx-4">
-              <div class="md:flex-1 px-4">
-                  <div class="h-[460px] rounded-lg bg-black-300  mb-4">
-                      <img class="w-full h-full object-cover" src="{{ product.images.first.image.url }}" alt="Product Image">
-                  </div>
-                  
-              </div>
-              <div class="md:flex-1 px-4">
-                  <h2 class="text-2xl font-bold text-black-800  mb-2">{{product.item_name}}</h2>
-                  <div class="flex mb-4">
-                      <div class="mr-4">
-                        {% for inventory in inventory_data %}
-                          <span class="font-bold">Price:</span>
-                          <span class="font-semibold ">₹{{inventory.purchase_rate}}</span>
-                          <span class="text-black-600 text-sm   line-through  ">₹{{inventory.mrp}}</span>
-                        {% endfor %}
+{% load static %}
+<!-- Open Content -->
+    <section class="bg-light">
+        <div class="container pb-5">
+            <div class="row">
+                <div class="col-lg-5 mt-5">
+                    <div class="card mb-3">
+                        <img class="card-img img-fluid" src="{{ images.0.image.url }}" alt="{{ product.item_name }}" id="product-detail">
+                    </div>
+                    <div class="row">
+                      <!--   <div class="col-1 align-self-center">
+                            <a href="#multi-item-example" role="button" data-bs-slide="prev">
+                                <i class="text-dark fas fa-chevron-left"></i>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                        </div> -->
+                        <div id="multi-item-example" class="col-10 carousel slide carousel-multi-item" data-bs-ride="carousel">
+                            <div class="carousel-inner product-links-wap" role="listbox">
+                                <div class="carousel-item active">
+                                    <div class="row">
+                                      {% for productImages in images %}
+                                        <div class="col-4">
+                                            <a href="#">
+                                                <img class="card-img img-fluid" src="{{productImages.image.url}}" alt="Product Image 1">
+                                            </a>
+                                        </div>
+                                      {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <!--End Slides-->
+                        </div>
+                        <!--End Carousel Wrapper-->
+                        <!--Start Controls-->
+                       <!--  <div class="col-1 align-self-center">
+                            <a href="#multi-item-example" role="button" data-bs-slide="next">
+                                <i class="text-dark fas fa-chevron-right"></i>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </div> -->
+                        <!--End Controls-->
+                    </div>
+                </div>
+                <!-- col end -->
+                <div class="col-lg-7 mt-5">
+                    <div class="card">
+                        <div class="card-body">
+                            {% for inventory in inventory_data %}
+                            <h1 class="h2 fw-bold">{{inventory.item_name}}</h1>
+                            <div class="d-flex gap-2 align-items-center">
+                              <p class="h3 py-2 fw-normal">₹{{inventory.selling_price |floatformat:0}}</p>
+                              <p class="h6 py-2 text-decoration-line-through">₹{{inventory.mrp |floatformat:0}}</p>
+                               <span class="h6 text-white bg-black rounded px-2 py-1" style="font-size:8px">{{inventory.discount|floatformat:0}}%Off</span>
+                            </div>
+                            {% endfor %}
+                          <!--   <p class="py-2">
+                                <i class="fa fa-star text-warning"></i>
+                                <i class="fa fa-star text-warning"></i>
+                                <i class="fa fa-star text-warning"></i>
+                                <i class="fa fa-star text-warning"></i>
+                                <i class="fa fa-star text-secondary"></i>
+                                <span class="list-inline-item text-dark">Rating 4.8 | 36 Comments</span>
+                            </p> -->
+                            <ul class="list-inline">
+                                <li class="list-inline-item">
+                                    <h6>Brand:</h6>
+                                </li>
+                                <li class="list-inline-item">
+                                  {% for inventory in inventory_data %}
+                                    <p class=""><strong>{{inventory.brand}}</strong></p>
+                                  {% endfor %}
+                                </li>
+                            </ul>
 
-                      </div>
-                      <div>
-                          <span class="font-bold text-black-700 ">Availability:</span>
-                          {% for inventory in inventory_data %}
-                          <span class="text-black-600 ">{{inventory.stock_status  }}</span>
-                        {% endfor %}
+                            <h6>Description:</h6>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod temp incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse. Donec condimentum elementum convallis. Nunc sed orci a diam ultrices aliquet interdum quis nulla.</p>
 
-                      </div>
-                  </div>
-                 
-                  <div>
-                      <span class="font-bold text-black-700 ">Product Description:</span>
-                      <p class="text-black-600  text-sm mt-2">
-                         {{product.item_description}}
-                      </p>
-                  </div>
-              </div>
-          </div>
-      </div>
-  </div>
-  
-</div>
-{% include "ramjeetfrontend/comming_soon.html" %}
+
+                            <form action="" >
+                                <div class="row pb-3">
+                                    <!-- <div class="col d-grid">
+                                        <button type="submit" class="btn btn-success btn-lg" name="submit" value="buy">Buy</button>
+                                    </div> -->
+                                   <!--  <div class="col d-grid">
+                                        <button type="submit" class="btn btn-success btn-lg" name="submit" value="addtocard">Add To Cart</button>
+                                    </div> -->
+                                    <div class="col d-grid">
+                                      <a class="text-white fw-normal px-3 py-2 rounded text-center text-decoration-none bg-success" href="https://wa.me/919119116052" target="_blank"> Click here to contact me on WhatsApp: +91-9119116052</a>
+
+                                    </div>
+                                </div>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Close Content -->
 
 
 {% endblock content %}
