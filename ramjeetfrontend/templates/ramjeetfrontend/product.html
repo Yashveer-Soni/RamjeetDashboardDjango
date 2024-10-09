@@ -53,7 +53,7 @@
                             <h1 class="h2 fw-bold">{{inventory.item_name}}</h1>
                             <div class="d-flex gap-2 align-items-center">
                               <p class="h3 py-2 fw-normal">₹{{inventory.selling_price |floatformat:0}}</p>
-                              <p class="h6 py-2 text-decoration-line-through">₹{{inventory.mrp |floatformat:0}}</p>
+                              <p class="h6 py-2 text-decoration-line-through fw-normal">₹{{inventory.mrp |floatformat:0}}</p>
                                <span class="h6 text-white bg-black rounded px-2 py-1" style="font-size:8px">{{inventory.discount|floatformat:0}}%Off</span>
                             </div>
                             {% endfor %}
@@ -71,13 +71,17 @@
                                 </li>
                                 <li class="list-inline-item">
                                   {% for inventory in inventory_data %}
-                                    <p class=""><strong>{{inventory.brand}}</strong></p>
+                                    <p class="brand-name"><strong>{{inventory.brand}}</strong></p>
                                   {% endfor %}
                                 </li>
                             </ul>
 
-                            <h6>Description:</h6>
-                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod temp incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse. Donec condimentum elementum convallis. Nunc sed orci a diam ultrices aliquet interdum quis nulla.</p>
+                            <h6>Description</h6>
+                            <p class="item_description">
+                              {% for inventory in inventory_data %}
+                              {{inventory.description}}
+                              {% endfor %}
+                            </p>
 
 
                             <form action="" >
@@ -89,7 +93,7 @@
                                         <button type="submit" class="btn btn-success btn-lg" name="submit" value="addtocard">Add To Cart</button>
                                     </div> -->
                                     <div class="col d-grid">
-                                      <a class="text-white fw-normal px-3 py-2 rounded text-center text-decoration-none bg-success" href="https://wa.me/919119116052" target="_blank"> Click here to contact me on WhatsApp: +91-9119116052</a>
+                                      <a class=" fw-normal px-3 py-2 d-flex align-items-center justify-content-center gap-2 rounded text-center text-decoration-none bg-black" style="color:#49c959 ;" href="https://wa.me/919119116052" target="_blank"><img class="whatsapp-icon" src="{% static 'icon/whatsapp.png'%}" /> Order On Whatsapp</a>
 
                                     </div>
                                 </div>

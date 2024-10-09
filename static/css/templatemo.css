@@ -1,7 +1,7 @@
 body, ul, li, p, a, label, input, div {
   font-family: 'Roboto', sans-serif;
-  font-size: 18px !important;
-  font-weight: 300 !important;
+  font-size: 18px ;
+  font-weight: 300 ;
 }
 .navbar-brand{
   margin: 0px!important;
@@ -39,6 +39,10 @@ body, ul, li, p, a, label, input, div {
   background-color: #69bb7e;
   color: #fff;
 }
+.whatsapp-button{
+  width: 100%;
+  max-width: 25rem;
+}
 /* Nav */
 #templatemo_nav_top { min-height: 40px;}
 #templatemo_nav_top * { font-size: .9em !important;}
@@ -75,6 +79,25 @@ body, ul, li, p, a, label, input, div {
 #carousel-related-product .slick-dots li button:before {
   font-size: 15px;
   margin-top: 20px;
+}
+.item_description{
+  font-size: 14px;
+}
+.contact-icons img{
+  width: 20px;
+}
+.contact-icons{
+      background: #059212;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 45px;
+    max-width: 45px;
+    border-radius: 3px;
+}
+.brand-name{
+  font-size: 16px;
 }
 /* Brand */
 .brand-img {
@@ -126,6 +149,9 @@ body, ul, li, p, a, label, input, div {
   color: #212934;
   transition: .5s;
 }
+.whatsapp-icon{
+  width: 20px;
+}
 #tempaltemo_footer .border-light { border-color: #2d343f !important;}
 /*
 // Extra small devices (portrait phones, less than 576px)
@@ -144,7 +170,14 @@ body, ul, li, p, a, label, input, div {
   .tempaltemo-carousel .h1 { font-size: 1em !important;}
 }
 
+@media (max-width: 800px){
+  .contact-us-form{
+    flex-direction: column-reverse;
+    gap: 20px;
+  }
+}
 /*// Medium devices (tablets, 768px and up)*/
+
 @media (min-width: 768px) {
   #templatemo_main_nav .navbar-nav {max-width: 450px;}
  }

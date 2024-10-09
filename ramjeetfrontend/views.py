@@ -37,6 +37,7 @@ def product_view(request, id):
         {   
             'id': product.id,
             'item_name': product.item_name,
+            'description':product.item_description,
             'mrp': float(inventory.mrp),
             'brand':product.brand.brand_name if product.brand else None,
             'selling_price': float(inventory.selling_price),
@@ -61,3 +62,6 @@ def product_view(request, id):
         'images': images,  # Pass images to the template
     })
 
+
+def contact_us(request):
+     return render(request, 'ramjeetfrontend/contact.html');
