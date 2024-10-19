@@ -5,11 +5,15 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.http import HttpResponse
+from django.template.loader import render_to_string 
+from xhtml2pdf import pisa
+from io import BytesIO
 import csv
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.contrib.auth.admin import GroupAdmin
+from decimal import Decimal
 from .models import (
     Parent_Category, CategoryMaster, SubCategoryMaster, BrandMaster,
     UnitMaster, ItemMaster, InventoryMaster,
@@ -177,7 +181,7 @@ class ItemMasterAdmin(admin.ModelAdmin, ExportCsvMixin):
     readonly_fields = ('image_preview',)
     actions = ['mark_as_deleted']
     inlines = [ItemImageInline]  # Include ItemImageInline for managing images
-    exclude=('profit','margin','tags','collections','status','is_deleted')
+    # exclude=('profit','margin','tags','collections','status','is_deleted')
     def mark_as_deleted(self, request, queryset):
         queryset.update(is_deleted=True)
 
@@ -239,8 +243,71 @@ class InverdInventoryMasterAdmin(admin.ModelAdmin, ExportCsvMixin):
     actions = ['export_as_csv']
 
 @admin.register(InverdInvoiceProductDetail)
-class InverdInvoiceProductionDetailAdmin(admin.ModelAdmin, ExportCsvMixin):
+class InverdInvoiceProductDetailAdmin(admin.ModelAdmin, ExportCsvMixin):
     list_display = ('id', 'invoice', 'item', 'quantity', 'mrp', 'purchase_rate', 'packet_date', 'expired_date', 'unit', 'is_deleted', 'created_at', 'updated_at')
     search_fields = ('invoice__invoice_id', 'item__item_name')
     list_filter = ('invoice', 'item', 'is_deleted', 'created_at', 'updated_at')
-    actions = ['export_as_csv']
+    actions = ['export_as_csv', 'generate_invoice_pdf']
+
+    def generate_invoice_pdf(self, request, queryset):
+        # Create a buffer to hold the PDF
+        buffer = BytesIO()
+
+        # Loop over each selected invoice
+        for invoice_detail in queryset:
+            # Get the invoice associated with the invoice_detail
+            invoice = invoice_detail.invoice
+
+            # Get all the product details related to the invoice
+            items = InverdInvoiceProductDetail.objects.filter(invoice=invoice).select_related('item')
+
+            # Prepare a list of items to pass to the template
+            invoice_items = []
+            subtotal = Decimal('0.00')  # Ensure subtotal is a Decimal
+            for item_detail in items:
+                item = item_detail.item
+                total = item_detail.quantity * item_detail.mrp  # This is valid since both are Decimals
+                subtotal += total  # Adding Decimal to Decimal
+
+                # Add item details to the list
+                invoice_items.append({
+                    'description': item.item_name,
+                    'unit_price': item_detail.mrp,
+                    'quantity': item_detail.quantity,
+                    'total': total,
+                })
+
+            # Calculate totals and taxes using Decimals
+            tax_rate = Decimal('0.05')  # 5% tax as a Decimal
+            tax = subtotal * tax_rate  # Tax is also Decimal
+            total = subtotal + tax
+
+            # Prepare context to pass to the template
+            context = {
+                'invoice': {
+                    'client_name': 'Client Name',  # Replace with actual data
+                    'client_address': 'Client Address',  # Replace with actual data
+                    'invoice_id': invoice.invoice_id,
+                    'date': invoice.created_at,
+                    'due_date': 'Due Date',  # Replace with actual due date logic
+                    'items': invoice_items,
+                    'subtotal': subtotal,
+                    'tax': tax,
+                    'total': total,
+                }
+            }
+
+            # Render the HTML template with the context
+            html_string = render_to_string('ramjeet/invoice_template.html', context)
+
+            # Convert the HTML to PDF
+            pisa_status = pisa.CreatePDF(BytesIO(html_string.encode('UTF-8')), dest=buffer)
+
+            if pisa_status.err:
+                return HttpResponse('We had some errors with the PDF generation', content_type='text/plain')
+
+        # Prepare HTTP response with the generated PDF
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename=invoice_{invoice.invoice_id}.pdf'
+
+        return response

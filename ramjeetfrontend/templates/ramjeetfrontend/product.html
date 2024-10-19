@@ -50,11 +50,20 @@
                     <div class="card">
                         <div class="card-body">
                             {% for inventory in inventory_data %}
-                            <h1 class="h2 fw-bold">{{inventory.item_name}}</h1>
+                            <h1 class="h2 fw-bold">{{inventory.item_name}}   
+                                    
+                                  </h1>
                             <div class="d-flex gap-2 align-items-center">
                               <p class="h3 py-2 fw-normal">₹{{inventory.selling_price |floatformat:0}}</p>
                               <p class="h6 py-2 text-decoration-line-through fw-normal">₹{{inventory.mrp |floatformat:0}}</p>
                                <span class="h6 text-white bg-black rounded px-2 py-1" style="font-size:8px">{{inventory.discount|floatformat:0}}%Off</span>
+                               {% if inventory.current_stock > 1 and inventory.current_stock < 6 %}
+                                   <span class="h6  stock-badge" style="background-color:#bd9405;">{{inventory.stock_status}}</span>
+                               {% elif inventory.current_stock < 1 %} 
+                                     <span class="h6  stock-badge" style="background-color:red;">{{inventory.stock_status}}</span>
+                               {% else %}
+                                    <span class="h6  stock-badge bg-success" style="">{{inventory.stock_status}}</span>
+                               {% endif %}
                             </div>
                             {% endfor %}
                           <!--   <p class="py-2">
@@ -75,30 +84,34 @@
                                   {% endfor %}
                                 </li>
                             </ul>
+                       
+
 
                             <h6>Description</h6>
-                            <p class="item_description">
-                              {% for inventory in inventory_data %}
-                              {{inventory.description}}
-                              {% endfor %}
-                            </p>
+                          <p class="item_description">
+                            {% for inventory in inventory_data %}
+                                {{ inventory.description }}
+                            {% endfor %}
+                        </p>
 
+                        <form action="">
+                            <div class="row pb-3">
+                                <div class="col d-grid">
+                                    {% for inventory in inventory_data %}
+                                         <a class="fw-normal px-3 py-2 d-flex align-items-center justify-content-center gap-2 rounded text-center text-decoration-none bg-black"
+                                           {% if inventory.current_stock > 0 %}
+                                             href="https://wa.me/9119116052" target="_blank"
+                                             style="color:#49c959;"
+                                           {% else %}
+                                             style="color:#49c959; pointer-events: none; opacity: 0.5;"
+                                           {% endif %}>
+                                            <img class="whatsapp-icon" src="{% static 'icon/whatsapp.png' %}" /> Order On Whatsapp
+                                        </a>
+                                    {% endfor %}
 
-                            <form action="" >
-                                <div class="row pb-3">
-                                    <!-- <div class="col d-grid">
-                                        <button type="submit" class="btn btn-success btn-lg" name="submit" value="buy">Buy</button>
-                                    </div> -->
-                                   <!--  <div class="col d-grid">
-                                        <button type="submit" class="btn btn-success btn-lg" name="submit" value="addtocard">Add To Cart</button>
-                                    </div> -->
-                                    <div class="col d-grid">
-                                      <a class=" fw-normal px-3 py-2 d-flex align-items-center justify-content-center gap-2 rounded text-center text-decoration-none bg-black" style="color:#49c959 ;" href="https://wa.me/919119116052" target="_blank"><img class="whatsapp-icon" src="{% static 'icon/whatsapp.png'%}" /> Order On Whatsapp</a>
-
-                                    </div>
                                 </div>
-                            </form>
-
+                            </div>
+                        </form>
                         </div>
                     </div>
                 </div>

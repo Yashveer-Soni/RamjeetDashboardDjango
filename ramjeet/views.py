@@ -93,6 +93,7 @@ class SignInView(APIView):
             # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
+            print(access_token);
             refresh_token = str(refresh)
             
             print(user.is_staff)
@@ -179,7 +180,7 @@ def add_item(request):
     unit = UnitMaster.objects.create(
         quantity=data['quantity'],
         weight=data['weight'],
-        weight_type=data.get('weight_type', 'kg')
+        weight_type=data.get('weightType')
     )
 
     # Create the ItemMaster instance
@@ -188,9 +189,6 @@ def add_item(request):
         item_name=data['item_name'],
         item_description=data.get('item_description', ''),
         status=data.get('status', 'Draft'),
-        cost_per_item=data.get('cost_per_item', 0),
-        profit=data.get('profit', 0),
-        margin=data.get('margin', 0),
         brand=brand,
         bar_code=data.get('bar_code', ''),
         is_deleted=False
@@ -214,6 +212,10 @@ def add_item(request):
         item=item,
         mrp=data['mrp'],
         purchase_rate=data['purchase_rate'],
+        selling_price=data['selling_price'],
+        cost_per_item=data.get('cost_per_item', 0),
+        profit=data.get('profit', 0),
+        margin=data.get('margin', 0),
         pkt_date=data['pkt_date'],
         expired_date=data.get('expiry_date'),
         is_expired=data.get('is_expired', False),

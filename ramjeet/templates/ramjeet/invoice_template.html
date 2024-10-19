@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header img {
+            width: 100px; /* Adjust logo size */
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+        }
+        .header h2 {
+            font-size: 18px;
+            color: #666;
+        }
+        .invoice-details {
+            margin-bottom: 30px;
+        }
+        .invoice-details p {
+            margin: 4px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f9f9f9;
+        }
+        .subtotal {
+            text-align: right;
+            font-weight: bold;
+        }
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="http://127.0.0.1:8000/static/logo/favicon.svg" width="200px" alt="Logo">
+            <h1>Ramjeet Mart</h1>
+        </div>
+        
+        <div class="invoice-details">
+            <p>ISSUED TO:</p>
+            <p>{{ invoice.client_name }}</p>
+            <p>{{ invoice.client_address }}</p>
+            <p>INVOICE NO: {{ invoice.invoice_id }}</p>
+            <p>DATE: {{ invoice.date }}</p>
+            <p>DUE DATE: {{ invoice.due_date }}</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>DESCRIPTION</th>
+                    <th>UNIT PRICE</th>
+                    <th>QTY</th>
+                    <th>TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items %}
+                <tr>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.unit_price }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.total }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="3" class="subtotal">SUBTOTAL</td>
+                    <td>{{ invoice.subtotal |floatformat:0 }}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="subtotal">Tax</td>
+                    <td>{{ invoice.tax | floatformat:0 }}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="total">TOTAL</td>
+                    <td>{{ invoice.total | floatformat:0 }}</td>
+                </tr>
+            </tbody>
+        </table>
+<!-- 
+        <div class="footer">
+            <p>BANK DETAILS</p>
+            <p>Borecele Bank</p>
+            <p>Account Name: Avery Davis</p>
+            <p>Account No.: 0123 4567 8901</p>
+            <p>THANK YOU</p>
+            <p>Avery Davis</p>
+        </div> -->
+    </div>
+</body>
+</html>

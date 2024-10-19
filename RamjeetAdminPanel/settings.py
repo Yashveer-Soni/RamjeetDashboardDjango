@@ -30,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -125,20 +125,20 @@ DATABASES = {
         # 'HOST':'localhost',
         # 'PORT':'3306',
         # postgresql
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'ramjeet',
-        # 'USER': 'ramjeet',
-        # 'HOST': 'localhost',
-        # 'PASSWORD': 'ramjeet',
-        # 'PORT': '5432',    
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ramjeet',
+        'USER': 'ramjeet',
+        'HOST': 'localhost',
+        'PASSWORD': 'ramjeet',
+        'PORT': '5432',    
         # 
         # production database
-         'ENGINE': 'django.db.backends.postgresql',
-         'NAME': 'ramjeet',
-         'USER': 'ramjeet',
-         'HOST': config('HOST'),
-         'PASSWORD': config('PASSWORD'),
-         'PORT': '5432',    
+        #  'ENGINE': 'django.db.backends.postgresql',
+        #  'NAME': 'ramjeet',
+        #  'USER': 'ramjeet',
+        #  'HOST': config('HOST'),
+        #  'PASSWORD': config('PASSWORD'),
+        #  'PORT': '5432',    
     }
 }
 
