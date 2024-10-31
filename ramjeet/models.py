@@ -171,7 +171,7 @@ class ItemMaster(models.Model):
     status = models.CharField(max_length=50, choices=[('active', 'Active'), ('draft', 'Draft')], default='draft')
     tags = models.ManyToManyField(Tag, blank=True)
     collections = models.ManyToManyField(Collection, blank=True)
-    brand = models.ForeignKey(BrandMaster, on_delete=models.CASCADE)
+    brand = models.ForeignKey(BrandMaster, on_delete=models.SET_NULL, null=True, blank=True)
     bar_code = models.CharField(max_length=255, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

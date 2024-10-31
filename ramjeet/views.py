@@ -17,9 +17,11 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.shortcuts import redirect
 from functools import wraps
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.middleware.csrf import get_token
+from django.db.models import Sum
 
 
 def role_required(required_role):
@@ -36,9 +38,30 @@ def role_required(required_role):
         return _wrapped_view
     return decorator
 
-# @ensure_csrf_cookie
-# def csrf_token(request):
-#     return JsonResponse({'csrfToken': request.META.get('CSRF_COOKIE', '')})
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def validate_token(request):
+    try:
+        token = request.headers.get('Authorization').split()[1]
+        decoded_token = AccessToken(token)  
+
+        user = request.user
+        if hasattr(user, 'role'):
+            data = {
+                "user": user.email,
+                "role": user.role,
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"detail": "User role attribute not found"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+    except Exception as e:
+        print(f"Token validation error: {e}")
+        return Response(
+            {"detail": "Invalid token or expired"}, status=status.HTTP_401_UNAUTHORIZED
+        )
 
 def csrf_token(request):
     csrf_token = get_token(request)
@@ -51,12 +74,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom claims
-        token['role'] = user.role  # Include the role in the token
-        token['is_staff'] = user.is_staff  # Include is_staff in the token
-        token['is_superuser'] = user.is_superuser  # Include is_superuser in the token
+        token['role'] = user.role 
+        token['is_staff'] = user.is_staff 
+        token['is_superuser'] = user.is_superuser 
 
-        # Add additional user information to the token
         token['full_name'] = user.full_name  
         token['email'] = user.email  
 
@@ -65,16 +86,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        # Add additional fields to the response
-        data['role'] = self.user.role  # Include the role in the response
-        data['is_staff'] = self.user.is_staff  # Include is_staff in the response
-        data['is_superuser'] = self.user.is_superuser  # Include is_superuser in the response
+        data['role'] = self.user.role 
+        data['is_staff'] = self.user.is_staff 
+        data['is_superuser'] = self.user.is_superuser 
 
-        # Allow both staff and regular users to log in
         if not self.user.is_active:
             raise serializers.ValidationError('This account is inactive.')
 
-        # Optionally, restrict login based on roles if needed
         if hasattr(self.user, 'role') and self.user.role not in ['admin', 'user']:
             raise serializers.ValidationError('You do not have the required role to log in.')
 
@@ -134,19 +152,19 @@ class BrandListView(generics.ListAPIView):
 
 
         
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def CurrentUserView(request):
-#     user = request.user
-#     serializer = UserSerializer(user)
-#     return Response(serializer.data)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def CurrentUserView(request):
+    user = request.user
+    serializer = UserSerializer(user)
+    return Response(serializer.data)
     
     
 @api_view(['POST'])
 def add_item(request):
     data = request.data
-    print("data", data)
     files = request.FILES.getlist('images')
+    
 
     # Check if required keys are in the request data
     required_keys = ['sub_category', 'category', 'brand', 'item_name', 'bar_code', 'mrp', 'purchase_rate', 'pkt_date', 'quantity', 'weight']
@@ -237,9 +255,18 @@ class CustomPagination(PageNumberPagination):
     max_page_size = 100
 
 class ItemMasterListView(generics.ListAPIView):
-    queryset = InventoryMaster.objects.all()
+    queryset = InventoryMaster.objects.annotate(total_stock=Sum('unit__quantity')).order_by('item')
     serializer_class = InventorySerializer
     pagination_class = CustomPagination
+
+class ItemSingleView(APIView):
+    def get(self, request, id):
+        try:
+            product = InventoryMaster.objects.get(pk=id)
+            serializer = InventorySerializer(product)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except InventoryMaster.DoesNotExist:
+            return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class ItemMasterDetailView(generics.RetrieveAPIView):
     queryset = ItemMaster.objects.filter(is_deleted=False)  # Adjust the filter as needed
@@ -337,6 +364,7 @@ def update_product(request, product_id):
 @api_view(['POST'])
 def add_brand(request):
     name = request.data.get('name')
+    print(name)
     if BrandMaster.objects.filter(brand_name=name).exists():
         return Response({'error': 'Brand already exists.'}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -345,6 +373,21 @@ def add_brand(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def delete_brands(request):
+    brand_ids = request.data.get('ids', [])
+
+    if isinstance(brand_ids, list):
+        brands_to_delete = BrandMaster.objects.filter(id__in=brand_ids)
+    else:
+        brands_to_delete = BrandMaster.objects.filter(id=brand_ids)
+
+    if not brands_to_delete.exists():
+        return Response({'error': 'No brands found to delete.'}, status=status.HTTP_404_NOT_FOUND)
+
+    count, _ = brands_to_delete.delete()
+    return Response({'message': f'{count} brand(s) deleted successfully.'}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def search(request):
