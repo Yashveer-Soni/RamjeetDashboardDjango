@@ -4,7 +4,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from ramjeet.views import (
     SignInView, csrf_token, CategoryListView, delete_product, update_product,FetchSingleProduct,
-    BrandListView, add_item, SubCategoryListView, ItemMasterListView, CurrentUserView,
+    BrandListView, add_item, SubCategoryListView, ItemMasterListView, CurrentUserView,updateStock,
     ItemMasterDetailView,add_brand,CustomTokenObtainPairView ,search,delete_brands,ItemSingleView,validate_token
 )
 from django.views.generic import TemplateView
@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/products/', add_item, name='add-product'),
     path('api/search/', search, name='search'),
     path('api/inventory/', ItemMasterListView.as_view(), name='inventory-list'),
+    path('api/updateStock/<int:id>/', updateStock, name='updateStock'),
     path('api/inventory/<int:id>/', ItemSingleView.as_view(), name='ItemSingleView'),
     path('api/items/<int:id>/', ItemMasterDetailView.as_view(), name='item-detail'),
     path('api/products/<int:product_id>/', delete_product, name='delete_product'),

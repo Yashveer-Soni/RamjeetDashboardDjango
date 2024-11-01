@@ -52,7 +52,7 @@ class ItemSerializer(serializers.ModelSerializer):
     status=serializers.PrimaryKeyRelatedField(queryset=ItemMaster.objects.all())
     total_stock = serializers.SerializerMethodField()
 
-    class Meta:
+    class Meta: 
         model = ItemMaster
         fields = ['id', 'item_name', 'bar_code','item_description','status', 'sub_category', 'brand', 'images', 'tags', 'collections', 'created_at', 'updated_at','total_stock']
 
@@ -74,5 +74,5 @@ class InventorySerializer(serializers.ModelSerializer):
     class Meta:
         model = InventoryMaster
         fields = [
-            'id', 'item', 'mrp', 'purchase_rate', 'unit', 'pkt_date', 'expired_date', 'is_expired'
+            'id', 'item','selling_price', 'mrp', 'unit', 'pkt_date', 'expired_date', 'is_expired'
         ]

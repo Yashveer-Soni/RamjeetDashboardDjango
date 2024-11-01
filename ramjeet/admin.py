@@ -16,7 +16,7 @@ from django.contrib.auth.admin import GroupAdmin
 from decimal import Decimal
 from .models import (
     Parent_Category, CategoryMaster, SubCategoryMaster, BrandMaster,
-    UnitMaster, ItemMaster, InventoryMaster,
+    UnitMaster, ItemMaster, InventoryMaster,StockHistory,
     FirmMaster, InverdInventoryMaster, InverdInvoiceProductDetail, ItemImage,CustomerMaster, OrderMaster,OrderItem,PaymentMaster,CouponMaster,StockMovement,UserReviews,SupplierMaster,PurchaseOrderMaster,PurchaseOrderDetail,DeliveryMaster,NotificationMaster,NotificationSettings,ReturnMaster,Wishlist,InventoryAdjustment,ShippingMethod,ShippingDetails,
     Tag,Collection, MyUser
 )
@@ -27,6 +27,7 @@ admin.site.index_title = "Ramjeet"
 admin.site.register(Tag)
 admin.site.register(Collection)
 admin.site.register(CustomerMaster)
+admin.site.register(StockHistory)
 admin.site.register(OrderMaster)
 admin.site.register(OrderItem)
 admin.site.register(PaymentMaster)

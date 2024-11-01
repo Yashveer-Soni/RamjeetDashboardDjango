@@ -164,6 +164,8 @@ class Collection(models.Model):
     def __str__(self):
         return self.name
 
+
+
 class ItemMaster(models.Model):
     sub_category = models.ForeignKey(SubCategoryMaster, on_delete=models.CASCADE)
     item_name = models.CharField(max_length=255)
@@ -278,6 +280,17 @@ class InventoryMaster(models.Model):
     class Meta:
         verbose_name = "Stock"
         verbose_name_plural = "Add Stock"
+
+class StockHistory(models.Model):
+    inventory = models.ForeignKey(InventoryMaster, on_delete=models.CASCADE)
+    previous_quantity = models.IntegerField(null=True, blank=True)
+    new_quantity = models.IntegerField(null=True, blank=True)
+    previous_expired_date = models.DateField(null=True, blank=True)
+    new_expired_date = models.DateField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Update on {self.updated_at} for {self.inventory.item.item_name}"
 
 class FirmMaster(models.Model):
     firm_name = models.CharField(max_length=255)

@@ -3,18 +3,19 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import JsonResponse
+import json
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
 from rest_framework import generics
-from .models import CategoryMaster, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster,UnitMaster, Tag, Collection
+from .models import CategoryMaster, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster,UnitMaster, Tag, Collection,StockHistory
 from .serializers import CategoryMasterSerializer, BrandMasterSerializer, ProductSerializer, CategoryMaster,SubCategoryMasterSerializer, InventorySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.shortcuts import redirect
+from django.shortcuts import redirect,get_object_or_404
 from functools import wraps
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import AccessToken
@@ -258,6 +259,42 @@ class ItemMasterListView(generics.ListAPIView):
     queryset = InventoryMaster.objects.annotate(total_stock=Sum('unit__quantity')).order_by('item')
     serializer_class = InventorySerializer
     pagination_class = CustomPagination
+
+@api_view(['PUT'])
+def updateStock(request, id):
+    if request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            inventory = get_object_or_404(InventoryMaster, pk=id)
+
+            previous_quantity = inventory.unit.quantity
+            previous_expired_date = inventory.expired_date
+
+            if 'expired_date' in data:
+                inventory.expired_date = data['expired_date']
+
+            if 'quantity' in data:
+                inventory.unit.quantity = data['quantity']
+                inventory.unit.save() 
+
+            inventory.save() 
+
+            # Create a history record
+            StockHistory.objects.create(
+                inventory=inventory,
+                previous_quantity=previous_quantity,
+                new_quantity=inventory.unit.quantity,
+                previous_expired_date=previous_expired_date,
+                new_expired_date=inventory.expired_date,
+            )
+
+            return JsonResponse({'message': 'Stock updated successfully', 'data': data}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+    
 
 class ItemSingleView(APIView):
     def get(self, request, id):
