@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
 from rest_framework import generics
 from .models import CategoryMaster, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster,UnitMaster, Tag, Collection,StockHistory
-from .serializers import CategoryMasterSerializer, BrandMasterSerializer, ProductSerializer, CategoryMaster,SubCategoryMasterSerializer, InventorySerializer
+from .serializers import CategoryMasterSerializer,StockHistorySerializer, BrandMasterSerializer, ProductSerializer, CategoryMaster,SubCategoryMasterSerializer, InventorySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -279,7 +279,6 @@ def updateStock(request, id):
 
             inventory.save() 
 
-            # Create a history record
             StockHistory.objects.create(
                 inventory=inventory,
                 previous_quantity=previous_quantity,
@@ -309,6 +308,16 @@ class ItemMasterDetailView(generics.RetrieveAPIView):
     queryset = ItemMaster.objects.filter(is_deleted=False)  # Adjust the filter as needed
     serializer_class = ProductSerializer
     lookup_field = 'id'  # Use 'id' or the primary key field name if different
+
+class StockHistoryListView(APIView):
+    def get(self, request):
+        stock_history = StockHistory.objects.all()
+        paginator = PageNumberPagination()
+        paginator.page_size = 20  
+        paginated_stock_history = paginator.paginate_queryset(stock_history, request)
+        serializer = StockHistorySerializer(paginated_stock_history, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
 
 @api_view(['GET'])
 def test_auth(request):

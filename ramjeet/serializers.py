@@ -1,12 +1,23 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import CategoryMaster, Tag, Collection, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage, MyUser
+from .models import CategoryMaster, Tag, Collection, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage, MyUser, StockHistory
 from django.db.models import Sum
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = '__all__'
         extra_kwargs = {'password': {'write_only': True}}
+
+class StockHistorySerializer(serializers.ModelSerializer):
+    inventory_item_name = serializers.CharField(source='inventory.item.item_name', read_only=True)
+
+    class Meta:
+        model = StockHistory
+        fields = [
+            'id', 'inventory', 'inventory_item_name', 'previous_quantity', 
+            'new_quantity', 'previous_expired_date', 'new_expired_date', 
+            'updated_at'
+        ]
 
 class CategoryMasterSerializer(serializers.ModelSerializer):
     class Meta:
