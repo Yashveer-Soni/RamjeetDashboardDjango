@@ -127,9 +127,9 @@ DATABASES = {
         # postgresql
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ramjeet',
-        'USER': 'ramjeet',
+        'USER': 'postgres',
         'HOST': 'localhost',
-        'PASSWORD': 'ramjeet',
+        'PASSWORD': 'root',
         'PORT': '5432',    
         # 
         # production database
@@ -211,15 +211,15 @@ MEDIA_ROOT=os.path.join(BASE_DIR,'media')
 LOGIN_URL = '/signin/'
 
 
-# AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
-# AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
-# AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
-# AWS_S3_SIGNATURE_NAME = 's3v4',
-# AWS_S3_REGION_NAME = 'eu-north-1'
-# AWS_S3_FILE_OVERWRITE = False
-# AWS_DEFAULT_ACL =  None
-# AWS_S3_VERITY = True
-# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+#AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
+#AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+#AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+#AWS_S3_SIGNATURE_NAME = 's3v4',
+#AWS_S3_REGION_NAME = 'eu-north-1'
+#AWS_S3_FILE_OVERWRITE = False
+#AWS_DEFAULT_ACL =  None
+#AWS_S3_VERITY = True
+#DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),  # 1 hour for access token

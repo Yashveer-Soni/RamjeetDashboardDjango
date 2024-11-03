@@ -164,6 +164,8 @@ class Collection(models.Model):
     def __str__(self):
         return self.name
 
+
+
 class ItemMaster(models.Model):
     sub_category = models.ForeignKey(SubCategoryMaster, on_delete=models.CASCADE)
     item_name = models.CharField(max_length=255)
@@ -171,7 +173,7 @@ class ItemMaster(models.Model):
     status = models.CharField(max_length=50, choices=[('active', 'Active'), ('draft', 'Draft')], default='draft')
     tags = models.ManyToManyField(Tag, blank=True)
     collections = models.ManyToManyField(Collection, blank=True)
-    brand = models.ForeignKey(BrandMaster, on_delete=models.CASCADE)
+    brand = models.ForeignKey(BrandMaster, on_delete=models.SET_NULL, null=True, blank=True)
     bar_code = models.CharField(max_length=255, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -278,6 +280,17 @@ class InventoryMaster(models.Model):
     class Meta:
         verbose_name = "Stock"
         verbose_name_plural = "Add Stock"
+
+class StockHistory(models.Model):
+    inventory = models.ForeignKey(InventoryMaster, on_delete=models.CASCADE)
+    previous_quantity = models.IntegerField(null=True, blank=True)
+    new_quantity = models.IntegerField(null=True, blank=True)
+    previous_expired_date = models.DateField(null=True, blank=True)
+    new_expired_date = models.DateField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Update on {self.updated_at} for {self.inventory.item.item_name}"
 
 class FirmMaster(models.Model):
     firm_name = models.CharField(max_length=255)
@@ -458,4 +471,3 @@ class ShippingDetails(models.Model):
 
     def __str__(self):
         return f"Shipping Details for Order #{self.order.id}"
-
