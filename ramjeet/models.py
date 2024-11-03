@@ -471,4 +471,3 @@ class ShippingDetails(models.Model):
 
     def __str__(self):
         return f"Shipping Details for Order #{self.order.id}"
-
