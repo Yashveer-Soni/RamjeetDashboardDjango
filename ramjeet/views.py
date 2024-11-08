@@ -47,6 +47,7 @@ def validate_token(request):
     try:
         token = request.headers.get('Authorization').split()[1]
         decoded_token = AccessToken(token)  
+        print(decoded_token)
 
         user = request.user
         if hasattr(user, 'role'):
@@ -168,7 +169,7 @@ def add_item(request):
     data = request.data
     files = request.FILES.getlist('files') 
 
-    required_keys = ['sub_category', 'category', 'brand', 'item_name', 'bar_code', 'mrp', 'purchase_rate', 'pkt_date', 'quantity', 'weight']
+    required_keys = ['sub_category', 'files','category', 'brand', 'item_name', 'bar_code', 'mrp', 'purchase_rate', 'pkt_date', 'quantity', 'weight']
     for key in required_keys:
         if key not in data:
             return Response({"error": f"'{key}' is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -196,12 +197,13 @@ def add_item(request):
         weight=data['weight'],
         weight_type=data.get('weightType')
     )
+    print(data.get('status'))
 
     item = ItemMaster.objects.create(
         sub_category=sub_category,
         item_name=data['item_name'],
         item_description=data.get('item_description', ''),
-        status=data.get('status', 'Draft'),
+        status=data.get('status').lower() or 'draft',
         brand=brand,
         bar_code=data['bar_code'],
         is_deleted=False
@@ -339,7 +341,6 @@ def FetchSingleProduct(request, product_id):
 @api_view(['PUT'])
 def update_product(request, product_id):
     try:
-        # Retrieve the product to be updated
         product = ItemMaster.objects.get(pk=product_id)
     except ItemMaster.DoesNotExist:
         return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -372,7 +373,25 @@ def update_product(request, product_id):
         return Response({"error": "Brand not found."}, status=status.HTTP_404_NOT_FOUND)
 
     # Update the ItemMaster instance
+    tags_names = data.get('tags', [])
+    tags_list = [tag.strip() for tag in tags_names.split(',')]
+    tags = []
+    for tag_name in tags_list:
+        tag, created = Tag.objects.get_or_create(name=tag_name) 
+        tags.append(tag)
+
+    collection_names = data.get('collections', [])
+    collection_list = [collection.strip() for collection in collection_names.split(',')]
+    collections = []
+    for collection_name in collection_list:
+        collection, created = Collection.objects.get_or_create(name=collection_name)
+        collections.append(collection)
+
     product.item_name = data.get('item_name', product.item_name)
+    product.item_description = data.get('item_description', product.item_description)
+    product.status = data.get('status', product.status)
+    product.tags.set(tags)
+    product.collections.set(collections)
     product.sub_category = sub_category
     product.brand = brand
     product.save()
@@ -382,11 +401,14 @@ def update_product(request, product_id):
         inventory_item = InventoryMaster.objects.get(item=product)
         inventory_item.mrp = data.get('mrp', inventory_item.mrp)
         inventory_item.purchase_rate = data.get('purchase_rate', inventory_item.purchase_rate)
+        inventory_item.cost_per_item = data.get('cost_per_item', inventory_item.cost_per_item)or 0
+        inventory_item.selling_price = data.get('selling_price', inventory_item.selling_price)
         inventory_item.pkt_date = data.get('pkt_date', inventory_item.pkt_date)
         inventory_item.expired_date = data.get('expiry_date', inventory_item.expired_date)
         inventory_item.is_expired = data.get('is_expired', inventory_item.is_expired)
         inventory_item.unit.quantity = data.get('quantity', inventory_item.unit.quantity)
         inventory_item.unit.weight = data.get('weight', inventory_item.unit.weight)
+        inventory_item.unit.weight_type = data.get('weight_type', inventory_item.unit.weight_type)
         inventory_item.unit.save()
         inventory_item.save()
     except InventoryMaster.DoesNotExist:

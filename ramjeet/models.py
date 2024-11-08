@@ -153,13 +153,13 @@ class UnitMaster(models.Model):
         verbose_name_plural = "Add Unit"
 
 class Tag(models.Model):
-    name =models.TextField(blank=True, null=True)
+    name =models.CharField(blank=True, null=True)
 
     def __str__(self):
         return self.name
 
 class Collection(models.Model):
-    name =models.TextField(blank=True, null=True)
+    name =models.CharField(blank=True, null=True)
 
     def __str__(self):
         return self.name

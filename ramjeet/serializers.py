@@ -41,24 +41,28 @@ class ItemImageSerializer(serializers.ModelSerializer):
         model = ItemImage
         fields = ['image']
 
+
+
 class ProductSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=CategoryMaster.objects.all(), source='sub_category.category')
     sub_category = serializers.PrimaryKeyRelatedField(queryset=SubCategoryMaster.objects.all())
     brand = serializers.PrimaryKeyRelatedField(queryset=BrandMaster.objects.all())
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)  # Include tags
-    collections = serializers.PrimaryKeyRelatedField(queryset=Collection.objects.all(), many=True)  # Include collections
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True) 
+    collections = serializers.PrimaryKeyRelatedField(queryset=Collection.objects.all(), many=True) 
     images = ItemImageSerializer(many=True, read_only=True)  # Include images
 
     class Meta:
         model = ItemMaster
         fields = ['id', 'item_name', 'bar_code', 'category', 'sub_category', 'brand', 'tags', 'collections', 'images', 'created_at', 'updated_at']
 
+
+
 class ItemSerializer(serializers.ModelSerializer):
     sub_category = SubCategoryMasterSerializer()
     brand = BrandMasterSerializer()
     images = ItemImageSerializer(many=True, read_only=True)  # Include images
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)  # Include tags
-    collections = serializers.PrimaryKeyRelatedField(queryset=Collection.objects.all(), many=True)  # Include collections
+    tags =  serializers.StringRelatedField(many=True) 
+    collections = serializers.StringRelatedField(many=True) 
     item_description=serializers.PrimaryKeyRelatedField(queryset=ItemMaster.objects.all())
     status=serializers.PrimaryKeyRelatedField(queryset=ItemMaster.objects.all())
     total_stock = serializers.SerializerMethodField()
@@ -82,8 +86,21 @@ class InventorySerializer(serializers.ModelSerializer):
     item = ItemSerializer()
     unit = UnitMasterSerializer()
 
+    purchase_rate = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+
     class Meta:
         model = InventoryMaster
         fields = [
-            'id', 'item','selling_price', 'mrp', 'unit', 'pkt_date', 'expired_date', 'is_expired'
+            'id', 'item', 'selling_price', 'mrp', 'unit', 'pkt_date', 'expired_date', 'is_expired', 'purchase_rate'
         ]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        
+        request = self.context.get('request', None)
+        if request and not request.user.is_staff:
+            representation['purchase_rate'] = '****'  
+        
+        return representation
+
+
