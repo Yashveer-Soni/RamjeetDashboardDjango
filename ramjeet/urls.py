@@ -3,9 +3,9 @@ from django.conf.urls.static import static
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from ramjeet.views import (
-    SignInView, csrf_token,StockHistoryListView, CategoryListView, delete_product, update_product,FetchSingleProduct,
+    SignInView, csrf_token,remove_from_cart,StockHistoryListView, CategoryListView, delete_product, update_product,FetchSingleProduct,
     BrandListView, add_item, SubCategoryListView, ItemMasterListView, CurrentUserView,updateStock,
-    ItemMasterDetailView,add_brand,CustomTokenObtainPairView ,search,delete_brands,ItemSingleView,validate_token
+    ItemMasterDetailView,add_brand,CustomTokenObtainPairView ,search,delete_brands,ItemSingleView,validate_token,add_to_cart,get_cart
 )
 from django.views.generic import TemplateView
 
@@ -35,6 +35,10 @@ urlpatterns = [
     path('api/products/<int:product_id>/', delete_product, name='delete_product'),
     path('api/FetchSingleProduct/<int:product_id>/', FetchSingleProduct, name='FetchSingleProduct'),
     path('api/UpdateProducts/<int:product_id>/', update_product, name='update_product'),
+    path('api/AddToCart/', add_to_cart, name='add_to_cart'),
+    path('api/RemoveFromCart/', remove_from_cart, name='remove_from_cart'),
+    path('api/GetCart/', get_cart, name='update_product'),
+    # path('api/validate-quantity/<int:product_id>/', validate_quantity, name='validate_quantity'),
 ]
 
 if settings.DEBUG:

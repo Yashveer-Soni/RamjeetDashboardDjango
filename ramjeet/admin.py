@@ -18,13 +18,16 @@ from .models import (
     Parent_Category, CategoryMaster, SubCategoryMaster, BrandMaster,
     UnitMaster, ItemMaster, InventoryMaster,StockHistory,
     FirmMaster, InverdInventoryMaster, InverdInvoiceProductDetail, ItemImage,CustomerMaster, OrderMaster,OrderItem,PaymentMaster,CouponMaster,StockMovement,UserReviews,SupplierMaster,PurchaseOrderMaster,PurchaseOrderDetail,DeliveryMaster,NotificationMaster,NotificationSettings,ReturnMaster,Wishlist,InventoryAdjustment,ShippingMethod,ShippingDetails,
-    Tag,Collection, MyUser
+    Tag,Collection, MyUser, Cart,CartItem
 )
 admin.site.site_header = "Ramjeet Dashboard"
 admin.site.site_title = "Dashboard"
 admin.site.index_title = "Ramjeet"
 
 admin.site.register(Tag)
+admin.site.register(Cart)
+admin.site.register(CartItem)
+
 admin.site.register(Collection)
 admin.site.register(CustomerMaster)
 admin.site.register(StockHistory)

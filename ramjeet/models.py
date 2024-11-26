@@ -33,7 +33,7 @@ class MyUserManager(BaseUserManager):
         return user
 
 
-class MyUser(AbstractBaseUser, PermissionsMixin):  # Inherit from PermissionsMixin
+class MyUser(AbstractBaseUser, PermissionsMixin): 
     ROLE_CHOICES = (
         ('admin', 'Admin'),
         ('user', 'User'),
@@ -71,6 +71,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin):  # Inherit from PermissionsMix
         return self.is_superuser or super().has_module_perms(app_label)
         
 class CustomerMaster(models.Model):
+    user = models.OneToOneField(MyUser, on_delete=models.CASCADE, related_name='customer_profile')
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
@@ -471,3 +472,22 @@ class ShippingDetails(models.Model):
 
     def __str__(self):
         return f"Shipping Details for Order #{self.order.id}"
+    
+
+class Cart(models.Model):
+    user = models.ForeignKey(CustomerMaster, on_delete=models.CASCADE, related_name="carts")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Cart - {self.user.email}"
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey('InventoryMaster', on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.product.item.item_name} - {self.quantity}"
+
+    def get_total_price(self):
+        return self.quantity * self.product.selling_price

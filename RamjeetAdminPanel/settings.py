@@ -75,15 +75,16 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
      'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ),
 }
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_ALLOW_ALL = False
-CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000',  # Adjust to your React app's URL
-]
+CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ORIGIN_WHITELIST = [
+#     'http://192.168.137.1:8000', 
+#     'http://192.168.29.222:8081',
+# ]
 
 CORS_ALLOW_ALL_ORIGINS = True 
 ROOT_URLCONF = 'RamjeetAdminPanel.urls'

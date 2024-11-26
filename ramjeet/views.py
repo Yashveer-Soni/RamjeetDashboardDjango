@@ -8,10 +8,10 @@ import base64
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import UserSerializer
 from rest_framework import generics
-from .models import CategoryMaster, BrandMaster,ItemImage, ItemMaster, SubCategoryMaster, InventoryMaster,UnitMaster, Tag, Collection,StockHistory
+from .models import CategoryMaster,CustomerMaster, BrandMaster,ItemImage,MyUser, ItemMaster, SubCategoryMaster, InventoryMaster,UnitMaster, Tag, Collection,StockHistory,Cart, CartItem
 from .serializers import CategoryMasterSerializer,StockHistorySerializer, BrandMasterSerializer, ProductSerializer, CategoryMaster,SubCategoryMasterSerializer, InventorySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -102,6 +102,126 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         return data
     
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_to_cart(request):
+    if request.user.is_authenticated:
+        user = request.user
+
+    product_id = request.data.get('product_id')
+    quantity = int(request.data.get('quantity'))
+    print(product_id, quantity)
+
+    product = get_object_or_404(InventoryMaster, id=product_id)
+
+    if product.unit.quantity < quantity:
+        return JsonResponse({
+            'success': False,
+            'message': f'Only {product.unit.quantity} items are available in stock.'
+        }, status=400)
+
+    customer = CustomerMaster.objects.get(email=request.user.email)
+
+    cart, created = Cart.objects.get_or_create(user=customer)
+
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    
+    if not created:
+        # Update the cart item with the exact quantity (not incrementing)
+        cart_item.quantity = quantity
+    else:
+        # If it's a new cart item, set the quantity directly
+        cart_item.quantity = quantity
+
+    cart_item.save()
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Item added to cart successfully!',
+        'cart_item_id': cart_item.id,
+        'total_price': cart_item.get_total_price(),
+    })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_from_cart(request):
+    if request.user.is_authenticated:
+        user = request.user
+
+    product_id = request.data.get('product_id')
+    print(product_id)
+
+    product = get_object_or_404(InventoryMaster, id=product_id)
+
+    # Get the customer associated with the logged-in user
+    customer = CustomerMaster.objects.get(email=request.user.email)
+
+    # Get or create the cart for the customer
+    cart, created = Cart.objects.get_or_create(user=customer)
+
+    try:
+        # Try to find the cart item for the product
+        cart_item = CartItem.objects.get(cart=cart, product=product)
+        cart_item.delete()  # Delete the item from the cart
+        return JsonResponse({
+            'success': True,
+            'message': 'Item removed from cart successfully!'
+        })
+    except CartItem.DoesNotExist:
+        # If the product is not in the cart, return an error
+        return JsonResponse({
+            'success': False,
+            'message': 'Product not found in cart!'
+        }, status=400)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_cart(request):
+    if request.method == 'GET':
+        customer = CustomerMaster.objects.get(email=request.user.email)
+        cart = get_object_or_404(Cart, user=customer)
+        
+        cart_items = []
+        
+        for item in cart.items.all():
+            product_image_url = None
+            if item.product.item.images.exists():
+                product_image_url = f"http://{request.META['HTTP_HOST']}{item.product.item.images.first().image.url}"
+            
+            cart_items.append({
+                'id': item.id,
+                'productId':item.product.item.id,
+                'product_name': item.product.item.item_name,
+                'quantity': item.quantity,
+                'price': item.get_total_price(),
+                'image': product_image_url,
+            })
+        
+        return JsonResponse({'success': True, 'cart_items': cart_items})
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
+
+    
+# def validate_quantity(request, product_id):
+#     if request.method == 'GET':  
+#         product = get_object_or_404(InventoryMaster, id=product_id)
+#         quantity = int(request.GET.get('quantity', 1000))
+
+#         if quantity > product.unit.quantity:
+#             return JsonResponse({
+#                 'success': False,
+#                 'message': f'Only {product.unit.quantity} items are available in stock.'
+#             }, status=400)
+
+#         return JsonResponse({
+#             'success': True,
+#             'message': 'Quantity is valid.'
+#         })
+
+#     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
+    
 class SignInView(APIView):
     def post(self, request):
         username = request.data.get('username')
@@ -165,6 +285,7 @@ def CurrentUserView(request):
     
     
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_item(request):
     data = request.data
     files = request.FILES.getlist('files') 
@@ -250,12 +371,14 @@ class CustomPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
+@permission_classes([AllowAny])
 class ItemMasterListView(generics.ListAPIView):
     queryset = InventoryMaster.objects.annotate(total_stock=Sum('unit__quantity')).order_by('item')
     serializer_class = InventorySerializer
     pagination_class = CustomPagination
 
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def updateStock(request, id):
     if request.method == 'PUT':
         try:
@@ -320,6 +443,7 @@ def test_auth(request):
     return Response(data={"message": "You are authenticated"}, status=200)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_product(request, product_id):
     try:
         product = ItemMaster.objects.get(pk=product_id)
@@ -339,6 +463,7 @@ def FetchSingleProduct(request, product_id):
     
 
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def update_product(request, product_id):
     try:
         product = ItemMaster.objects.get(pk=product_id)
@@ -413,16 +538,21 @@ def update_product(request, product_id):
         inventory_item.save()
     except InventoryMaster.DoesNotExist:
         return Response({"error": "Inventory details not found for the product."}, status=status.HTTP_404_NOT_FOUND)
-
+    
+    print(files)
     # Save images related to the product
-    for file in files:
-        product.images.create(image=file)
+    if 'image' in data and data['image'] is None:
+        product.images.all().delete()
+    else:
+        for file in files:
+            product.images.create(image=file)
 
     serializer = ProductSerializer(product)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_brand(request):
     name = request.data.get('name')
     print(name)
@@ -436,6 +566,7 @@ def add_brand(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_brands(request):
     brand_ids = request.data.get('ids', [])
 
