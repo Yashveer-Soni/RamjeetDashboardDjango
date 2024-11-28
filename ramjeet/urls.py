@@ -3,9 +3,9 @@ from django.conf.urls.static import static
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from ramjeet.views import (
-    SignInView, csrf_token,remove_from_cart,StockHistoryListView, CategoryListView, delete_product, update_product,FetchSingleProduct,
-    BrandListView, add_item, SubCategoryListView, ItemMasterListView, CurrentUserView,updateStock,
-    ItemMasterDetailView,add_brand,CustomTokenObtainPairView ,search,delete_brands,ItemSingleView,validate_token,add_to_cart,get_cart
+    SignInView,DeliveryAddressListCreateAPIView,DeliveryAddressDetailAPIView, csrf_token,remove_from_cart,StockHistoryListView, CategoryListView, delete_product, update_product,FetchSingleProduct,
+    BrandListView,ShippingMethodAPIView, add_item, SubCategoryListView, ItemMasterListView, CurrentUserView,updateStock,MyOrders,
+    ItemMasterDetailView,add_brand,CustomTokenObtainPairView ,search,delete_brands,ItemSingleView,validate_token,add_to_cart,get_cart,PlaceOrderAPIView,ClearCartAPIView
 )
 from django.views.generic import TemplateView
 
@@ -38,6 +38,14 @@ urlpatterns = [
     path('api/AddToCart/', add_to_cart, name='add_to_cart'),
     path('api/RemoveFromCart/', remove_from_cart, name='remove_from_cart'),
     path('api/GetCart/', get_cart, name='update_product'),
+    path('api/ClearCart/', ClearCartAPIView.as_view(), name='ClearCartAPIView'),
+    path('api/PlaceOrder/', PlaceOrderAPIView.as_view(), name='place_order'),
+    path('api/MyOrders/', MyOrders.as_view(), name='MyOrders'),
+    path('api/delivery-addresses/', DeliveryAddressListCreateAPIView.as_view(), name='delivery-address-list-create'),
+    path('api/delivery-addresses/<int:pk>/', DeliveryAddressDetailAPIView.as_view(), name='delivery-address-detail'),
+    path('api/shipping-methods/', ShippingMethodAPIView.as_view(), name='ShippingMethod'),
+
+
     # path('api/validate-quantity/<int:product_id>/', validate_quantity, name='validate_quantity'),
 ]
 

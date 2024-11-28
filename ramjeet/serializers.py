@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import CategoryMaster, Tag, Collection, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage, MyUser, StockHistory
+from .models import CategoryMaster,OrderItem,DeliveryAddress, OrderMaster, Tag, Collection, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage, MyUser, StockHistory
 from django.db.models import Sum
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -102,5 +102,25 @@ class InventorySerializer(serializers.ModelSerializer):
             representation['purchase_rate'] = '****'  
         
         return representation
+    
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = ['item', 'quantity', 'unit_price', 'total_price']
+
+class OrderMasterSerializer(serializers.ModelSerializer):
+    order_items = OrderItemSerializer(many=True)
+
+    class Meta:
+        model = OrderMaster
+        fields = ['customer', 'total_amount', 'order_items']
 
 
+class DeliveryAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryAddress
+        fields = [
+            'id', 'customer','full_name', 'address_line_1', 'address_line_2', 
+            'phoneNumber', 'city', 'state', 'postal_code', 'country', 
+            'is_default', 'is_deleted', 'created_at', 'updated_at'
+        ]
