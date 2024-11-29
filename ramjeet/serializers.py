@@ -1,12 +1,35 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import CategoryMaster,OrderItem,DeliveryAddress, OrderMaster, Tag, Collection, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage, MyUser, StockHistory
+from .models import CategoryMaster,CustomerMaster,OrderItem,DeliveryAddress, OrderMaster, Tag, Collection, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage, MyUser, StockHistory
 from django.db.models import Sum
+from django.contrib.auth.password_validation import validate_password
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = '__all__'
         extra_kwargs = {'password': {'write_only': True}}
+
+class SignUpSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    confirmPassword = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = MyUser
+        fields = ['email', 'full_name', 'password', 'confirmPassword', 'role']
+        extra_kwargs = {'email': {'required': True}}
+
+    def validate(self, data):
+        if data['password'] != data['confirmPassword']:
+            raise serializers.ValidationError("Passwords do not match")
+        if data.get('role') not in dict(MyUser.ROLE_CHOICES):
+            raise serializers.ValidationError("Invalid role")
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop('confirmPassword', None)
+        user = MyUser.objects.create_user(**validated_data)
+        user.save()
+        return user
 
 class StockHistorySerializer(serializers.ModelSerializer):
     inventory_item_name = serializers.CharField(source='inventory.item.item_name', read_only=True)
@@ -18,6 +41,20 @@ class StockHistorySerializer(serializers.ModelSerializer):
             'new_quantity', 'previous_expired_date', 'new_expired_date', 
             'updated_at'
         ]
+
+class CustomerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerMaster
+        fields = [
+            'first_name',
+            'last_name',
+            'email',
+            'phone_number',
+            'address',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
 
 class CategoryMasterSerializer(serializers.ModelSerializer):
     class Meta:

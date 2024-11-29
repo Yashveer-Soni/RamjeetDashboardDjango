@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 class MyUserManager(BaseUserManager):
-    def create_user(self, email, full_name, password=None):
+    def create_user(self, email, full_name,role, password=None):
        
         if not email:
             raise ValueError('Users must have an email address')
@@ -11,6 +11,7 @@ class MyUserManager(BaseUserManager):
         user = self.model(
             email=self.normalize_email(email),
             full_name=full_name,
+            role=role,
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -111,7 +112,7 @@ class DeliveryAddress(models.Model):
 class OrderMaster(models.Model):
     customer = models.ForeignKey(CustomerMaster, on_delete=models.CASCADE)
     order_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=50, choices=[('pending', 'Pending'), ('shipped', 'Shipped'), ('delivered', 'Delivered')])
+    # status = models.CharField(max_length=50, choices=[('pending', 'Pending'), ('shipped', 'Shipped'), ('delivered', 'Delivered')])
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.CharField(max_length=50, choices=[('paid', 'Paid'), ('unpaid', 'Unpaid')])
     is_deleted = models.BooleanField(default=False)
@@ -426,9 +427,10 @@ class DeliveryMaster(models.Model):
     order = models.ForeignKey(OrderMaster, on_delete=models.CASCADE)
     shipping_detail=models.ForeignKey(ShippingDetails,on_delete=models.CASCADE)
     delivery_address = models.ForeignKey(DeliveryAddress, on_delete=models.CASCADE)
-    delivery_status = models.CharField(max_length=50, choices=[('pending', 'Pending'), ('in_transit', 'In Transit'), ('delivered', 'Delivered')])
+    delivery_status = models.CharField(max_length=50, choices=[('pending', 'Pending'), ('shipped', 'Shipped'), ('delivered', 'Delivered'),('canceled','Canceled')])
     delivery_person = models.CharField(max_length=255)
     contact_number = models.CharField(max_length=20)
+    canceled_at = models.DateTimeField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

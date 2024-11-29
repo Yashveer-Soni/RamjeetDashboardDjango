@@ -3,9 +3,9 @@ from django.conf.urls.static import static
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from ramjeet.views import (
-    SignInView,DeliveryAddressListCreateAPIView,DeliveryAddressDetailAPIView, csrf_token,remove_from_cart,StockHistoryListView, CategoryListView, delete_product, update_product,FetchSingleProduct,
+    SignInView,signup,DeliveryAddressListCreateAPIView,DeliveryAddressDetailAPIView, csrf_token,remove_from_cart,StockHistoryListView, CategoryListView, delete_product, update_product,FetchSingleProduct,
     BrandListView,ShippingMethodAPIView, add_item, SubCategoryListView, ItemMasterListView, CurrentUserView,updateStock,MyOrders,
-    ItemMasterDetailView,add_brand,CustomTokenObtainPairView ,search,delete_brands,ItemSingleView,validate_token,add_to_cart,get_cart,PlaceOrderAPIView,ClearCartAPIView
+    ItemMasterDetailView,CancelOrder,MyProfile,add_brand,CustomTokenObtainPairView ,search,delete_brands,ItemSingleView,validate_token,add_to_cart,get_cart,PlaceOrderAPIView,ClearCartAPIView
 )
 from django.views.generic import TemplateView
 
@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/validate_token/', validate_token, name='validate_token'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('signin/', SignInView.as_view(), name='signin'),
+    path('api/signup/', signup, name='signup'),
     path('csrf/', csrf_token, name='csrf_token'),
     path('api/current-user/', CurrentUserView, name='current-user'),
     path('api/categories/', CategoryListView.as_view(), name='category-list'),
@@ -41,9 +42,11 @@ urlpatterns = [
     path('api/ClearCart/', ClearCartAPIView.as_view(), name='ClearCartAPIView'),
     path('api/PlaceOrder/', PlaceOrderAPIView.as_view(), name='place_order'),
     path('api/MyOrders/', MyOrders.as_view(), name='MyOrders'),
+    path('api/CancelOrder/', CancelOrder.as_view(), name='CancelOrder'),
     path('api/delivery-addresses/', DeliveryAddressListCreateAPIView.as_view(), name='delivery-address-list-create'),
     path('api/delivery-addresses/<int:pk>/', DeliveryAddressDetailAPIView.as_view(), name='delivery-address-detail'),
     path('api/shipping-methods/', ShippingMethodAPIView.as_view(), name='ShippingMethod'),
+    path('api/MyProfile/', MyProfile.as_view(), name='MyProfile'),
 
 
     # path('api/validate-quantity/<int:product_id>/', validate_quantity, name='validate_quantity'),

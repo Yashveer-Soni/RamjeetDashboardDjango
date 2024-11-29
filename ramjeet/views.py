@@ -7,6 +7,7 @@ import uuid
 from django.db import transaction
 import json
 import base64
+from django.utils import timezone
 from decimal import Decimal
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -15,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import UserSerializer
 from rest_framework import generics
 from .models import CategoryMaster,ShippingMethod,DeliveryMaster,ShippingDetails,CustomerMaster, DeliveryAddress,BrandMaster,ItemImage,MyUser, ItemMaster, SubCategoryMaster, InventoryMaster,UnitMaster, Tag, Collection,StockHistory,Cart, CartItem, OrderMaster, OrderItem
-from .serializers import DeliveryAddressSerializer,CategoryMasterSerializer,StockHistorySerializer, BrandMasterSerializer, ProductSerializer, CategoryMaster,SubCategoryMasterSerializer, InventorySerializer
+from .serializers import SignUpSerializer,CustomerProfileSerializer,ItemImageSerializer,DeliveryAddressSerializer,CategoryMasterSerializer,StockHistorySerializer, BrandMasterSerializer, ProductSerializer, CategoryMaster,SubCategoryMasterSerializer, InventorySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -115,6 +116,45 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     
 
 @api_view(['POST'])
+def signup(request):
+    if request.method == 'POST':
+        request.data['role'] = 'user'  # Default role for signup
+        serializer = SignUpSerializer(data=request.data)
+
+        if serializer.is_valid():
+            # Save the user instance
+            user = serializer.save()
+
+            full_name = request.data.get('full_name', '')
+            name_parts = full_name.split(' ', 1) 
+            first_name = name_parts[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ''  
+
+            customer = CustomerMaster.objects.create(
+                user=user,
+                first_name=first_name,
+                last_name=last_name,
+                email=user.email, 
+                phone_number=request.data.get('phone_number', ''),
+                address=request.data.get('address', ''),
+            )
+            customer.save()
+
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            return Response({
+                "message": "User created successfully.",
+                "access_token": access_token,
+                "refresh_token": refresh_token
+            })
+
+        # If serializer is invalid, return errors
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_to_cart(request):
     if request.user.is_authenticated:
@@ -122,7 +162,6 @@ def add_to_cart(request):
 
     product_id = request.data.get('product_id')
     quantity = int(request.data.get('quantity'))
-    print(product_id, quantity)
 
     product = get_object_or_404(InventoryMaster, id=product_id)
 
@@ -177,27 +216,6 @@ def remove_from_cart(request):
             'message': 'Product not found in cart!'
         }, status=400)
 
-@permission_classes([IsAuthenticated])
-class PlaceOrderAPIView(APIView):
-    def post(self, request):
-        customer_id = request.data.get('customer_id')
-        cart_items = request.data.get('cart_items') 
-        total_amount = request.data.get('total_amount')
-        deliveryAddressId = request.data.get('deliveryAdderess_id')
-        shippingMethod = request.data.get('shippingMethod')
-        
-        # Fetch customer and delivery address
-        customer = CustomerMaster.objects.get(email=customer_id)
-        delivery_address = DeliveryAddress.objects.get(id=deliveryAddressId)
-        
-        # Create the order
-        order = OrderMaster.objects.create(
-            customer=customer,
-            total_amount=total_amount,
-            status='pending',  
-            payment_status='unpaid', 
-        )
-
          # {
         #     "method_name": "Free Shipping",
         #     "cost": Decimal("0.00"),  # Free shipping, no cost
@@ -220,15 +238,65 @@ class PlaceOrderAPIView(APIView):
         # if Decimal(total_amount) > 500: 
         #     shipping_method = ShippingMethod.objects.get(method_name="Free Shipping")
         # else:
-        
+@permission_classes([IsAuthenticated])
+class PlaceOrderAPIView(APIView):
+    def post(self, request):
+        customer_id = request.data.get('customer_id')
+        cart_items = request.data.get('cart_items')
+        total_amount = request.data.get('total_amount')
+        deliveryAddressId = request.data.get('deliveryAdderess_id')
+        shippingMethod = request.data.get('shippingMethod')
+
+        # Fetch customer and delivery address
+        try:
+            customer = CustomerMaster.objects.get(email=customer_id)
+            delivery_address = DeliveryAddress.objects.get(id=deliveryAddressId)
+        except (CustomerMaster.DoesNotExist, DeliveryAddress.DoesNotExist):
+            return Response({'error': 'Invalid customer or delivery address.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate stock availability for all items in the cart
+        insufficient_stock_items = []
+        for item in cart_items:
+            try:
+                product = ItemMaster.objects.get(id=item['id'])
+                inventory_item = InventoryMaster.objects.get(item=product)
+
+                if inventory_item.is_deleted:
+                    insufficient_stock_items.append({
+                        'item_name': product.item_name,
+                        'error': 'Item is no longer available.'
+                    })
+                elif inventory_item.unit.quantity < item['quantity']:
+                    insufficient_stock_items.append({
+                        'item_name': product.item_name,
+                        'error': f'Not enough stock. Available quantity: {inventory_item.unit.quantity}'
+                    })
+            except (ItemMaster.DoesNotExist, InventoryMaster.DoesNotExist):
+                return Response({'error': f'Invalid item with ID {item["id"]} in cart.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # If there are insufficient stock items, return an error response
+        if insufficient_stock_items:
+            return Response({
+                'error': 'Insufficient stock for some items.',
+                'details': insufficient_stock_items
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         # Start a transaction to ensure all changes are atomic
         with transaction.atomic():
+            # Create the order
+            order = OrderMaster.objects.create(
+                customer=customer,
+                total_amount=total_amount,
+                # status='pending',
+                payment_status='unpaid',
+            )
+
+            # Add items to the order
             for item in cart_items:
                 product = ItemMaster.objects.get(id=item['id'])
                 unit_price = Decimal(item['unitPrice'])
                 total_price = Decimal(item['price'])
-                
-                # Create order items
+
                 OrderItem.objects.create(
                     order=order,
                     item=product,
@@ -236,41 +304,34 @@ class PlaceOrderAPIView(APIView):
                     unit_price=unit_price,
                     total_price=total_price
                 )
-                
-                # Check and reduce stock in InventoryMaster
-                inventory_item = InventoryMaster.objects.get(item=product)
-                if inventory_item.is_deleted:
-                    raise Response(f"Item {product.item_name} is no longer available.")
-                
-                # Ensure sufficient stock is available
-                if inventory_item.unit.quantity < item['quantity']:
-                    raise Response(f"Not enough stock for {product.item_name}. Available quantity: {inventory_item.unit.quantity}")
-                
+
                 # Reduce the stock quantity
+                inventory_item = InventoryMaster.objects.get(item=product)
                 inventory_item.unit.quantity -= item['quantity']
                 inventory_item.unit.save()
 
             # Handle shipping details and delivery
             shipping_method = ShippingMethod.objects.filter(method_name=shippingMethod).first()
-            tracking_number = generate_unique_tracking_number()        
+            tracking_number = generate_unique_tracking_number()
             shipping_details = ShippingDetails.objects.create(
-                    shipping_method=shipping_method, 
-                    tracking_number=tracking_number,
-                    shipping_date=None,
-                    delivery_date=None
-                )
-            
+                shipping_method=shipping_method,
+                tracking_number=tracking_number,
+                shipping_date=None,
+                delivery_date=None
+            )
+
             DeliveryMaster.objects.create(
-                    order=order,
-                    shipping_detail=shipping_details,
-                    delivery_address=delivery_address,
-                    delivery_status='pending',  # Initial status
-                    delivery_person='Not Assigned',  # Can be updated later
-                    contact_number='Not Available',  # Can be updated later
-                )
+                order=order,
+                shipping_detail=shipping_details,
+                delivery_address=delivery_address,
+                delivery_status='pending',  # Initial status
+                delivery_person='Not Assigned',  # Can be updated later
+                contact_number='Not Available',  # Can be updated later
+            )
 
         # Return success response
         return Response({'message': 'Order placed successfully!'}, status=status.HTTP_201_CREATED)
+
 
 @permission_classes([IsAuthenticated]) 
 class ShippingMethodAPIView(APIView):
@@ -303,15 +364,80 @@ class ClearCartAPIView(APIView):
             return Response({'message': 'Cart cleared successfully!'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@permission_classes([IsAuthenticated])
+class CancelOrder(APIView):
+    def post(self, request):
+        """
+        Cancel an order for the authenticated user.
+        """ 
+        try:
+            customer_id = request.user.email
+            order_id = request.data.get('order_id')
+            if not order_id:
+                return Response({'message': 'Order ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            order = OrderMaster.objects.filter(id=order_id, customer__email=customer_id, is_deleted=False).first()
+            
+            if not order:
+                return Response({'message': 'Order not found or does not belong to this user.'}, status=status.HTTP_404_NOT_FOUND)
+            
+            delivery_info = DeliveryMaster.objects.filter(order=order, is_deleted=False).first()
+
+            if not delivery_info:
+                return Response({'message': 'No delivery information found for this order.'}, status=status.HTTP_404_NOT_FOUND)
+
+            if delivery_info.delivery_status in ['delivered', 'shipped']:
+                return Response({'message': 'Order cannot be canceled, it is already delivered or shipped.'})
+
+            delivery_info.delivery_status = 'canceled'
+            delivery_info.canceled_at=timezone.now()
+            delivery_info.save()
+            print("Sdf")
+
+            return Response({'message': 'Order successfully canceled.'})
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+@permission_classes([IsAuthenticated])
+class MyProfile(APIView):
+    def get(self, request):
+        """
+        Retrieve the authenticated user's profile.
+        """
+        try:
+            customer = CustomerMaster.objects.get(user=request.user, is_deleted=False)
+            serializer = CustomerProfileSerializer(customer)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CustomerMaster.DoesNotExist:
+            return Response({"error": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request):
+        """
+        Update the authenticated user's profile.
+        """
+        try:
+            customer = CustomerMaster.objects.get(user=request.user, is_deleted=False)
+            serializer = CustomerProfileSerializer(customer, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except CustomerMaster.DoesNotExist:
+            return Response({"error": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
+       
+
 @permission_classes([IsAuthenticated])
 class MyOrders(APIView):
     def get(self, request):
         """
-        Fetch all orders for the authenticated user, including order items.
+        Fetch all orders for the authenticated user, including order items, delivery details, shipping information, and customer data.
         """
         try:
+            # Get the customer's email
             customer = request.user.email
+            # Filter orders based on the customer
             orders = OrderMaster.objects.filter(customer__email=customer, is_deleted=False).order_by('-created_at')
 
             if not orders.exists():
@@ -320,28 +446,64 @@ class MyOrders(APIView):
             # Prepare serialized response
             orders_data = []
             for order in orders:
-                order_items = order.order_items.all()  # Fetch related order items
-                items_data = [
-                    {
+                order_items = order.order_items.all()  
+                items_data = []
+                for item in order_items:
+                    item_images = ItemImage.objects.filter(item=item.item)
+                    item_image_data=ItemImageSerializer(item_images, many=True).data
+                    items_data.append({
                         'item_name': item.item.item_name,
                         'quantity': item.quantity,
                         'unit_price': float(item.unit_price),
                         'total_price': float(item.total_price),
+                        'images': item_image_data,  # Include the list of image URLs
+                    })
+                # Fetch delivery information
+                delivery_info = DeliveryMaster.objects.filter(order=order, is_deleted=False).first()
+                if delivery_info:
+                    shipping_details = ShippingDetails.objects.get(id=delivery_info.shipping_detail.id)
+                    delivery_address = DeliveryAddress.objects.get(id=delivery_info.delivery_address.id)
+
+                    delivery_data = {
+                        'delivery_status': delivery_info.delivery_status,
+                        'delivery_person': delivery_info.delivery_person,
+                        'contact_number': delivery_info.contact_number,
+                        'shipping_details': {
+                            'shipping_method': shipping_details.shipping_method.method_name,
+                            'tracking_number': shipping_details.tracking_number,
+                            'shipping_date': shipping_details.shipping_date.strftime('%Y-%m-%d %H:%M:%S') if shipping_details.shipping_date else None,
+                            'delivery_date': shipping_details.delivery_date.strftime('%Y-%m-%d %H:%M:%S') if shipping_details.delivery_date else None,
+                        },
+                        'delivery_address': {
+                            'full_name': delivery_address.full_name,
+                            'address_line_1': delivery_address.address_line_1,
+                            'address_line_2': delivery_address.address_line_2,
+                            'phone_number': delivery_address.phoneNumber,
+                            'city': delivery_address.city,
+                            'state': delivery_address.state,
+                            'postal_code': delivery_address.postal_code,
+                            'country': delivery_address.country,
+                            'is_default': delivery_address.is_default,
+                        }
                     }
-                    for item in order_items
-                ]
+                else:
+                    delivery_data = None
+
                 orders_data.append({
                     'order_id': order.id,
                     'order_date': order.order_date.strftime('%Y-%m-%d %H:%M:%S'),
-                    'status': order.status,
                     'total_amount': float(order.total_amount),
                     'payment_status': order.payment_status,
                     'items': items_data,
+                    'delivery_info': delivery_data,
                 })
 
+
             return Response({'orders': orders_data}, status=status.HTTP_200_OK)
+        
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 @api_view(['GET'])
@@ -363,7 +525,7 @@ def get_cart(request):
                 'productId':item.product.item.id,
                 'product_name': item.product.item.item_name,
                 'quantity': item.quantity,
-                'unitPrie':item.product.selling_price,
+                'unitPrice':item.product.selling_price,
                 'price': item.get_total_price(),
                 'image': product_image_url,
             })
@@ -770,7 +932,8 @@ class DeliveryAddressListCreateAPIView(APIView):
     """
     def get(self, request):
         # Get all delivery addresses
-        delivery_addresses = DeliveryAddress.objects.filter(is_deleted=False)
+        userId=request.user.email
+        delivery_addresses = DeliveryAddress.objects.filter(customer__email=userId,is_deleted=False)
         serializer = DeliveryAddressSerializer(delivery_addresses, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
