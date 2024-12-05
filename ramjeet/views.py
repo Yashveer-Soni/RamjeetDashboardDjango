@@ -9,6 +9,7 @@ import json
 import base64
 from django.utils import timezone
 from decimal import Decimal
+from datetime import timedelta
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import api_view, permission_classes
@@ -16,7 +17,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import UserSerializer
 from rest_framework import generics
 from .models import CategoryMaster,ShippingMethod,DeliveryMaster,ShippingDetails,CustomerMaster, DeliveryAddress,BrandMaster,ItemImage,MyUser, ItemMaster, SubCategoryMaster, InventoryMaster,UnitMaster, Tag, Collection,StockHistory,Cart, CartItem, OrderMaster, OrderItem
-from .serializers import SignUpSerializer,CustomerProfileSerializer,ItemImageSerializer,DeliveryAddressSerializer,CategoryMasterSerializer,StockHistorySerializer, BrandMasterSerializer, ProductSerializer, CategoryMaster,SubCategoryMasterSerializer, InventorySerializer
+from .serializers import CollectionSerializer,SignUpSerializer,CustomerProfileSerializer,ItemImageSerializer,DeliveryAddressSerializer,CategoryMasterSerializer,StockHistorySerializer, BrandMasterSerializer, ProductSerializer, CategoryMaster,SubCategoryMasterSerializer, InventorySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -29,7 +30,40 @@ from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.middleware.csrf import get_token
 from django.db.models import Sum
+from twilio.rest import Client
+import random
 
+# from django.db.models import Q
+
+# user_email = request.user.email
+# user_mobile = request.user.phone_number  # Assuming phone_number is available on request.user
+
+# # Construct query conditions
+# query = Q(is_deleted=False)
+# if user_email:
+#     query &= Q(customer__email=user_email)
+# if user_mobile:
+#     query |= Q(customer__phone_number=user_mobile)
+
+# # Apply the query to the filter method
+# order = OrderMaster.objects.filter(Q(id=order_id) & query).first()
+
+def generate_otp():
+    """Generate a 6-digit OTP."""
+    return str(random.randint(100000, 999999))
+
+def send_sms_via_twilio(phone_number, otp):
+    account_sid = 'your_account_sid'
+    auth_token = 'your_auth_token'
+    client = Client(account_sid, auth_token)
+
+    message = client.messages.create(
+        body=f"Your OTP code is {otp}",
+        from_='+1234567890',  # Your Twilio phone number
+        to=phone_number  # The phone number to which OTP will be sent
+    )
+
+    return message.sid
 
 def generate_unique_tracking_number():
     tracking_number = str(uuid.uuid4()) 
@@ -52,6 +86,79 @@ def role_required(required_role):
                 return redirect('login')
         return _wrapped_view
     return decorator
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_collection(request):
+    data = request.data
+    product_ids = [product['id'] for product in data.get('products', [])]
+
+    # Validate required fields
+    required_keys = ['name', 'slug']
+    for key in required_keys:
+        if key not in data:
+            return Response({"error": f"'{key}' is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if a collection with the same name already exists
+    if Collection.objects.filter(name=data['name']).exists():
+        return Response({"error": "A collection with this name already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Create collection
+    collection = Collection.objects.create(
+        name=data['name'],
+        description=data.get('description', ''),  # Optional description
+        slug=data['slug'],
+        priority=1,
+        isActive=data.get('isActive', True),
+        is_public=data.get('is_public', True),
+    )
+    # Associate products using the set() method
+    collection.products.set(product_ids)
+
+    # Serialize and return response
+    serializer = CollectionSerializer(collection)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def edit_collection(request, collection_id):
+    try:
+        collection = Collection.objects.get(id=collection_id)
+    except Collection.DoesNotExist:
+        return Response({"error": "Collection not found."}, status=status.HTTP_404_NOT_FOUND)
+    
+    data = request.data
+    
+    # Update fields
+    collection.name = data.get('name', collection.name)
+    collection.description = data.get('description', collection.description)
+    collection.slug = data.get('slug', collection.slug)
+    collection.priority = data.get('priority', collection.priority)
+    collection.isActive = data.get('isActive', collection.isActive)
+    collection.is_public = data.get('is_public', collection.is_public)
+
+    collection.save()
+
+    # Serialize and return response
+    serializer = CollectionSerializer(collection)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_collection(request, collection_id):
+    try:
+        collection = Collection.objects.get(id=collection_id)
+    except Collection.DoesNotExist:
+        return Response({"error": "Collection not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Perform a hard delete from the database
+    collection.delete()
+
+    return Response({"message": "Collection deleted successfully."}, status=status.HTTP_200_OK)
+
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -117,42 +224,126 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 @api_view(['POST'])
 def signup(request):
-    if request.method == 'POST':
-        request.data['role'] = 'user'  # Default role for signup
-        serializer = SignUpSerializer(data=request.data)
+    phone_number = request.data.get('phone_number', '')
 
-        if serializer.is_valid():
-            # Save the user instance
-            user = serializer.save()
+    # Validate phone number
+    if not phone_number:
+        return Response({"message": "Phone number is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-            full_name = request.data.get('full_name', '')
-            name_parts = full_name.split(' ', 1) 
-            first_name = name_parts[0]
-            last_name = name_parts[1] if len(name_parts) > 1 else ''  
+    # Check if phone number starts with '+' and prepend '+91' if not
+    if not phone_number.startswith('+'):
+        phone_number = '+91' + phone_number
 
-            customer = CustomerMaster.objects.create(
-                user=user,
-                first_name=first_name,
-                last_name=last_name,
-                email=user.email, 
-                phone_number=request.data.get('phone_number', ''),
-                address=request.data.get('address', ''),
-            )
-            customer.save()
+    # Generate OTP
+    mobile_otp = generate_otp()
+    otp_expiration_time = timezone.now() + timedelta(minutes=2)  # OTP validity 2 minutes
 
-            refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
+    try:
+        # Check if user already exists or not
+        user = MyUser.objects.get(phone_number=phone_number)
+        user.mobile_otp = mobile_otp
+        user.otp_created_at = otp_expiration_time
+        user.save()
+    except MyUser.DoesNotExist:
+        # Create new user if not exists
+        user = MyUser.objects.create(
+            phone_number=phone_number,
+            otp=mobile_otp,
+            otp_created_at=otp_expiration_time,
+            is_active=False,
+        )
 
-            return Response({
-                "message": "User created successfully.",
-                "access_token": access_token,
-                "refresh_token": refresh_token
-            })
+    # Send OTP via Twilio (dummy function `send_sms_via_twilio`)
+    message_status = send_sms_via_twilio(phone_number, mobile_otp)
+    if not message_status:
+        return Response(
+            {"message": "Failed to send OTP. Please try again later."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
-        # If serializer is invalid, return errors
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({
+        "message": "OTP sent to the mobile number. Please verify the OTP."
+    })
 
+
+@api_view(['POST'])
+def verify_otp(request):
+    phone_number = request.data.get('phone_number', '')
+    otp = request.data.get('otp', '')
+
+    if not phone_number or not otp:
+        return Response({"message": "Phone number and OTP are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = MyUser.objects.get(phone_number=phone_number)
+
+        # Validate OTP
+        if user.mobile_otp != otp:
+            return Response({"message": "Invalid OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if OTP is expired
+        if user.otp_created_at < timezone.now():
+            return Response({"message": "OTP expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Activate the user
+        user.is_active = True
+        user.mobile_otp = None  # Clear OTP after successful verification
+        user.save()
+
+        has_profile = CustomerMaster.objects.filter(user=user).exists()
+        # Generate access and refresh tokens
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            "message": "OTP verified successfully.",
+            "access_token": str(refresh.access_token),
+            "refresh_token": str(refresh),
+            "has_profile": has_profile
+        })
+
+    except MyUser.DoesNotExist:
+        return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+    
+
+@api_view(['POST'])
+def create_customer_profile(request):
+    phone_number = request.data.get('phone_number', '')
+
+    if not phone_number:
+        return Response({"message": "Phone number is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Retrieve the user based on the phone number
+        user = MyUser.objects.get(phone_number=phone_number)
+
+        # Ensure the user is active
+        if not user.is_active:
+            return Response({"message": "User is not active. Please verify OTP first."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the customer profile already exists
+        if CustomerMaster.objects.filter(user=user).exists():
+            return Response({"message": "Customer profile already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the customer profile
+        full_name = request.data.get('full_name', '')
+        name_parts = full_name.split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+        customer = CustomerMaster.objects.create(
+            user=user,
+            first_name=first_name,
+            last_name=last_name,
+            email=request.data.get('email', ''),  # Optional: Save email if provided
+            phone_number=phone_number,
+            address=request.data.get('address', ''),
+        )
+        customer.save()
+
+        return Response({"message": "Customer profile created successfully."})
+
+    except MyUser.DoesNotExist:
+        return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

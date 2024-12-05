@@ -230,3 +230,9 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': True,                    # Update the last login timestamp
     # other settings...
 }
+
+
+AUTHENTICATION_BACKENDS = [
+    'yourapp.backends.EmailOrPhoneBackend',  # Your custom backend
+    'django.contrib.auth.backends.ModelBackend',  # Default backend
+]

@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from ramjeet.views import (
     SignInView,signup,DeliveryAddressListCreateAPIView,DeliveryAddressDetailAPIView, csrf_token,remove_from_cart,StockHistoryListView, CategoryListView, delete_product, update_product,FetchSingleProduct,
     BrandListView,ShippingMethodAPIView, add_item, SubCategoryListView, ItemMasterListView, CurrentUserView,updateStock,MyOrders,
-    ItemMasterDetailView,CancelOrder,MyProfile,add_brand,CustomTokenObtainPairView ,search,delete_brands,ItemSingleView,validate_token,add_to_cart,get_cart,PlaceOrderAPIView,ClearCartAPIView
+    ItemMasterDetailView,CancelOrder,create_collection,edit_collection,delete_collection,MyProfile,add_brand,CustomTokenObtainPairView ,search,delete_brands,ItemSingleView,validate_token,add_to_cart,get_cart,PlaceOrderAPIView,ClearCartAPIView
 )
 from django.views.generic import TemplateView
 
@@ -20,6 +20,9 @@ urlpatterns = [
     path('signin/', SignInView.as_view(), name='signin'),
     path('api/signup/', signup, name='signup'),
     path('csrf/', csrf_token, name='csrf_token'),
+    path('collection/', create_collection, name='create_collection'),
+    path('collection/<int:collection_id>/', edit_collection, name='edit_collection'),
+    path('collection/delete/<int:collection_id>/', delete_collection, name='delete_collection'),
     path('api/current-user/', CurrentUserView, name='current-user'),
     path('api/categories/', CategoryListView.as_view(), name='category-list'),
     path('api/brands/', BrandListView.as_view(), name='brand-list'),

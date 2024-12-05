@@ -8,6 +8,30 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'password': {'write_only': True}}
 
+
+
+class SignUpSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    confirmPassword = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = MyUser
+        fields = ['email', 'full_name', 'password', 'mobile_number', 'confirmPassword', 'role']
+        extra_kwargs = {'email': {'required': True}}
+
+    def validate(self, data):
+        if data['password'] != data['confirmPassword']:
+            raise serializers.ValidationError("Passwords do not match")
+        if data.get('role') not in dict(MyUser.ROLE_CHOICES):
+            raise serializers.ValidationError("Invalid role")
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop('confirmPassword', None)
+        user = MyUser.objects.create_user(**validated_data)
+        user.save()
+        return user
+
 class StockHistorySerializer(serializers.ModelSerializer):
     inventory_item_name = serializers.CharField(source='inventory.item.item_name', read_only=True)
 
@@ -52,6 +76,12 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemMaster
         fields = ['id', 'item_name', 'bar_code', 'category', 'sub_category', 'brand', 'tags', 'collections', 'images', 'created_at', 'updated_at']
+
+class CollectionSerializer(serializers.ModelSerializer):
+    products = ProductSerializer(many=True)
+    class Meta:
+        model = Collection
+        fields = ['id', 'name', 'description', 'slug', 'priority', 'isActive', 'is_public', 'created_at', 'updated_at']
 
 class ItemSerializer(serializers.ModelSerializer):
     sub_category = SubCategoryMasterSerializer()
