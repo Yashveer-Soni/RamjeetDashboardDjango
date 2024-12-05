@@ -89,7 +89,7 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = MyUser
-        fields = ('email', 'password', 'full_name', 'is_active', 'is_admin', 'role', 'is_staff','is_superuser', 'groups')
+        fields = ('__all__')
 
     def clean_password(self):
         # Return the initial password, regardless of what the user enters
@@ -106,7 +106,7 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ('is_admin', 'is_active', 'role', 'is_superuser', 'is_staff')
 
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
+        (None, {'fields': ('email', 'phone_number','password')}),
         ('Personal info', {'fields': ('full_name',)}),
         ('Permissions', {'fields': ('is_active', 'is_admin', 'is_staff' , 'role', 'is_superuser', 'groups')}),  # added is_active, is_admin, and role
     )
@@ -120,8 +120,19 @@ class UserAdmin(BaseUserAdmin):
     ordering = ('email',)
     filter_horizontal = ('groups',) 
 
-# Register the new UserAdmin...
-admin.site.register(MyUser, UserAdmin)
+class MyUserAdmin(UserAdmin):
+    model = MyUser
+    list_display = ('email_or_phone', 'full_name', 'is_admin', 'is_staff', 'is_active', 'role', 'is_superuser')
+    list_filter = ('is_active', 'is_admin', 'is_staff', 'is_superuser', 'role')
+    ordering = ('email',)
+    search_fields = ('email', 'phone_number', 'full_name')
+
+    def email_or_phone(self, obj):
+        return obj.email if obj.email else obj.phone_number or "No Email/Phone"
+    email_or_phone.short_description = "Email or Phone"
+
+# Register the custom admin
+admin.site.register(MyUser, MyUserAdmin)
 
 class ExportCsvMixin:
     def export_as_csv(self, request, queryset):
