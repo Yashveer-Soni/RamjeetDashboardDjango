@@ -3,27 +3,32 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 class MyUserManager(BaseUserManager):
-    def create_user(self, email, full_name,role, password=None):
+    def create_user(self, email, phone_number,full_name,role, password=None):
        
         if not email:
             raise ValueError('Users must have an email address')
+        
+        if not phone_number:
+            raise ValueError("Users must have a mobile number")
 
         user = self.model(
             email=self.normalize_email(email),
             full_name=full_name,
+            phone_number=phone_number,
             role=role,
         )
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, full_name, password=None):
+    def create_superuser(self, email, full_name,phone_number,password=None):
         """
         Creates and saves a superuser with the given email, date of
         birth, and password.
         """
         user = self.create_user(
             email=email,
+            phone_number=phone_number,
             password=password,
             full_name=full_name,
         )
@@ -45,8 +50,11 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
         unique=True,
     )
     full_name =  models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=15, unique=True, null=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
     is_active = models.BooleanField(default=True)
+    otp = models.CharField(max_length=6, blank=True, null=True) 
+    otp_created_at = models.DateTimeField(blank=True, null=True)
     is_admin = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)  # Add this field as Boolean
     is_superuser = models.BooleanField(default=False)  # Add this field as Boolean
@@ -54,10 +62,10 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
     objects = MyUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['full_name']
+    # REQUIRED_FIELDS = ['email','full_name']
 
     def __str__(self):
-        return self.email
+        return self.email if self.email else self.phone_number or "Unknown User"
 
     def has_perm(self, perm, obj=None):
         """
@@ -184,21 +192,12 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
-class Collection(models.Model):
-    name =models.CharField(blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-
-
 class ItemMaster(models.Model):
     sub_category = models.ForeignKey(SubCategoryMaster, on_delete=models.CASCADE)
     item_name = models.CharField(max_length=255)
     item_description = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=50, choices=[('active', 'Active'), ('draft', 'Draft')], default='draft')
     tags = models.ManyToManyField(Tag, blank=True)
-    collections = models.ManyToManyField(Collection, blank=True)
     brand = models.ForeignKey(BrandMaster, on_delete=models.SET_NULL, null=True, blank=True)
     bar_code = models.CharField(max_length=255, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
@@ -207,6 +206,8 @@ class ItemMaster(models.Model):
 
     def __str__(self):
         return self.item_name
+    
+
 
     
 class OrderItem(models.Model):
@@ -306,6 +307,25 @@ class InventoryMaster(models.Model):
     class Meta:
         verbose_name = "Stock"
         verbose_name_plural = "Add Stock"
+
+class Collection(models.Model):
+    name = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
+    image = models.ImageField(upload_to='collections/', blank=True, null=True)
+    priority = models.PositiveIntegerField(default=0)
+    tags = models.CharField(max_length=255, blank=True, null=True)
+    products = models.ManyToManyField('InventoryMaster', related_name='collections', blank=True)
+    isActive = models.BooleanField(default=True)
+    is_public = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    published_at = models.DateTimeField(blank=True, null=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name or "Unnamed Collection"
 
 class StockHistory(models.Model):
     inventory = models.ForeignKey(InventoryMaster, on_delete=models.CASCADE)

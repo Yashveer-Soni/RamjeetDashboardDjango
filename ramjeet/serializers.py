@@ -1,35 +1,12 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import CategoryMaster,CustomerMaster,OrderItem,DeliveryAddress, OrderMaster, Tag, Collection, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage, MyUser, StockHistory
+from .models import CategoryMaster, Tag, Collection, BrandMaster, ItemMaster, SubCategoryMaster, InventoryMaster, UnitMaster, ItemImage, MyUser, StockHistory
 from django.db.models import Sum
-from django.contrib.auth.password_validation import validate_password
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = '__all__'
         extra_kwargs = {'password': {'write_only': True}}
-
-class SignUpSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    confirmPassword = serializers.CharField(write_only=True, required=True)
-
-    class Meta:
-        model = MyUser
-        fields = ['email', 'full_name', 'password', 'confirmPassword', 'role']
-        extra_kwargs = {'email': {'required': True}}
-
-    def validate(self, data):
-        if data['password'] != data['confirmPassword']:
-            raise serializers.ValidationError("Passwords do not match")
-        if data.get('role') not in dict(MyUser.ROLE_CHOICES):
-            raise serializers.ValidationError("Invalid role")
-        return data
-
-    def create(self, validated_data):
-        validated_data.pop('confirmPassword', None)
-        user = MyUser.objects.create_user(**validated_data)
-        user.save()
-        return user
 
 class StockHistorySerializer(serializers.ModelSerializer):
     inventory_item_name = serializers.CharField(source='inventory.item.item_name', read_only=True)
@@ -41,20 +18,6 @@ class StockHistorySerializer(serializers.ModelSerializer):
             'new_quantity', 'previous_expired_date', 'new_expired_date', 
             'updated_at'
         ]
-
-class CustomerProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomerMaster
-        fields = [
-            'first_name',
-            'last_name',
-            'email',
-            'phone_number',
-            'address',
-            'created_at',
-            'updated_at'
-        ]
-        read_only_fields = ['created_at', 'updated_at']
 
 class CategoryMasterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -78,28 +41,24 @@ class ItemImageSerializer(serializers.ModelSerializer):
         model = ItemImage
         fields = ['image']
 
-
-
 class ProductSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=CategoryMaster.objects.all(), source='sub_category.category')
     sub_category = serializers.PrimaryKeyRelatedField(queryset=SubCategoryMaster.objects.all())
     brand = serializers.PrimaryKeyRelatedField(queryset=BrandMaster.objects.all())
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True) 
-    collections = serializers.PrimaryKeyRelatedField(queryset=Collection.objects.all(), many=True) 
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)  # Include tags
+    collections = serializers.PrimaryKeyRelatedField(queryset=Collection.objects.all(), many=True)  # Include collections
     images = ItemImageSerializer(many=True, read_only=True)  # Include images
 
     class Meta:
         model = ItemMaster
         fields = ['id', 'item_name', 'bar_code', 'category', 'sub_category', 'brand', 'tags', 'collections', 'images', 'created_at', 'updated_at']
 
-
-
 class ItemSerializer(serializers.ModelSerializer):
     sub_category = SubCategoryMasterSerializer()
     brand = BrandMasterSerializer()
     images = ItemImageSerializer(many=True, read_only=True)  # Include images
-    tags =  serializers.StringRelatedField(many=True) 
-    collections = serializers.StringRelatedField(many=True) 
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)  # Include tags
+    collections = serializers.PrimaryKeyRelatedField(queryset=Collection.objects.all(), many=True)  # Include collections
     item_description=serializers.PrimaryKeyRelatedField(queryset=ItemMaster.objects.all())
     status=serializers.PrimaryKeyRelatedField(queryset=ItemMaster.objects.all())
     total_stock = serializers.SerializerMethodField()
@@ -123,41 +82,8 @@ class InventorySerializer(serializers.ModelSerializer):
     item = ItemSerializer()
     unit = UnitMasterSerializer()
 
-    purchase_rate = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-
     class Meta:
         model = InventoryMaster
         fields = [
-            'id', 'item', 'selling_price', 'mrp', 'unit', 'pkt_date', 'expired_date', 'is_expired', 'purchase_rate'
-        ]
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        
-        request = self.context.get('request', None)
-        if request and not request.user.is_staff:
-            representation['purchase_rate'] = '****'  
-        
-        return representation
-    
-class OrderItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderItem
-        fields = ['item', 'quantity', 'unit_price', 'total_price']
-
-class OrderMasterSerializer(serializers.ModelSerializer):
-    order_items = OrderItemSerializer(many=True)
-
-    class Meta:
-        model = OrderMaster
-        fields = ['customer', 'total_amount', 'order_items']
-
-
-class DeliveryAddressSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DeliveryAddress
-        fields = [
-            'id', 'customer','full_name', 'address_line_1', 'address_line_2', 
-            'phoneNumber', 'city', 'state', 'postal_code', 'country', 
-            'is_default', 'is_deleted', 'created_at', 'updated_at'
+            'id', 'item','selling_price', 'mrp', 'unit', 'pkt_date', 'expired_date', 'is_expired'
         ]
